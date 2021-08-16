@@ -1,6 +1,19 @@
 # AWS solution architect associate certificate preparation study notes
 
+core concept: Region, availability zone. global services (route 53, IAM, cloudfront, WAF).
+
 ## Compute
+
+EC2- Elastic Compute Cloud = Infrastructure As a Service
+* EC2
+* EBS (Elastic Blck Storage)
+* ELB (Elastic Load Balancing)
+* ASG (Auto-scaling Group)
+
+EC2 - OS includes Linux, Widnows, and Mac OS
+
+EC2 User Data: Run only once at the instance firt start as root to automate boot tasks like installing updates/software...
+
 
 ### EC2 Instance Types
 group by cpu, memory, storage and network.
@@ -27,6 +40,23 @@ ID|Type|Scenarios
 3 | Reserved instances | Reserved Instances are a billing discount applied to the use of On-Demand Instances in your account. You can purchase Standard Reserved and Convertible Reserved Instances for a 1-year or 3-year term, and Scheduled Reserved Instances for a 1-year term. You realize greater cost savings with the 3-year option.
 4 | Spot instances | Spot Instances are ideal for workloads with flexible start and end times, or that can withstand interruptions. Spot Instances use unused Amazon EC2 computing capacity and offer you cost savings at up to 90% off of On-Demand prices.
 5 | Dedicated hosts | Dedicated Hosts are physical servers with Amazon EC2 instance capacity that is fully dedicated to your use. 
+
+### EC2 Scalability
+Scalability involves beginning with only the resources you need and designing your architecture to automatically respond to changing demand by scaling out or in. As a result, you pay for only the resources you use. You don’t have to worry about a lack of computing capacity to meet your customers’ needs.
+Amazon EC2 Auto Scaling.Amazon EC2 Auto Scaling enables you to automatically add or remove Amazon EC2 instances in response to changing application demand. By automatically scaling your instances in and out as needed, you are able to maintain a greater sense of application availability.
+
+Within Amazon EC2 Auto Scaling, you can use two approaches: dynamic scaling and predictive scaling.
+
+* Dynamic scaling responds to changing demand. 
+* Predictive scaling automatically schedules the right number of Amazon EC2 instances based on predicted demand.
+![image](https://user-images.githubusercontent.com/85909185/129497947-1b7e565e-eccc-4ede-ab1a-01e943290e66.png)
+
+### Elastic Load Balancing
+Elastic Load Balancing is the AWS service that automatically distributes incoming application traffic across multiple resources, such as Amazon EC2 instances.
+ELB can work with auto scaling to route traffic dynamically to available instances. 
+* Class Load balancer
+* Network Load balancer (TCP)
+* Application Load Balancer (HTTP)
 
 ## Network
 
