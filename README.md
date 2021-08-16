@@ -58,6 +58,21 @@ ELB can work with auto scaling to route traffic dynamically to available instanc
 * Network Load balancer (TCP)
 * Application Load Balancer (HTTP)
 
+### Security Groups
+security groups are the fundational of network security in AWS as they control how traffic is allowd into or out of EC2 instances.
+securiy groups only contain allow rules
+security groups rules can reference by IP or by security group
+it actualy acts as 'firewall' on EC2 instances. the regulate:
+access to ports
+authorized IP ranges (both IPv4 and 6)
+control of outbound network
+* can be attached to multiple instances
+* locked down to a region/vpc combination
+* does 'live' outside the EC2, if traffic is blocked, instance won't see it.
+* if your application is not accessible (time out), it's security group issue
+* all inbound traffic is blocked by default 
+* all outbound traffic is authorised by default 
+
 ## Network
 
 ## Storage
