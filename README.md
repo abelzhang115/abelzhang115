@@ -73,9 +73,78 @@ control of outbound network
 * all inbound traffic is blocked by default 
 * all outbound traffic is authorised by default 
 
+### IP addresses
+private IP: Machines connect to WWW using a NAT + internet gateway (a proxy)
+by default, When you stop and then start an EC2 instance, it can change its public IP . use elastic IP if you want to have a fixed public IP which can only be attache to one instance at a time.
+With an Elastic IP address, you can mask the failure of an instance or software by rapidly remapping the address to another instance in your account.
+You can only have 5 Elastic IP in your account (you can ask AWS to increase that).
+Overall, try to avoid using Elastic IP:
+• They often reflect poor architectural decisions
+• Instead, use a random public IP and register a DNS name to it
+• Or, as we’ll see later, use a Load Balancer and don’t use a public IP
+
+by default, EC2 instance comes with a private ip and public ip. and if machine restarted, public IP can change.
+
+### Placement group
+Sometimes you want control over the EC2 Instance placement strategy.
+* Cluster—clusters instances into a low-latency group in a single Availability Zone  --on the same Rack, great network 10G, big data job, low latency and high network throughput.
+* Spread—spreads instances across underlying hardware (max 7 instances per group per AZ)  --instances on different hardware, can across AZ and region, maximize high availability. 
+* Partition—spreads instances across many different partitions (which rely on different sets of racks) within an AZ. Scales to 100s of EC2 instances per group (Hadoop, Cassandra, Kafka)  -up to 7 partitions per AZ, can span across AZ in the same region. up to 100 instances.instances in the same partition does not share racks. HDFS, HBase, Cassandra,Kafka
+
+### Elastic Network Interface (ENI)
+Logical component in a VPC that represents a virtual network card
+The ENI can have the following attributes:
+* Primary private Ipv4 , one or more secondary IPv4.
+* One or more security groups
+* One public IPv4
+* A MAC address
+* Bound to a specific AZ
+* can attach them on the fly (move them) 
+
+### EC2 Hiberate
+Stop: the data on disk (EBS) is kept intact in the next start
+Terminate: any EBS volumes (root) also set-up to be destroyed is lost
+
+On Start:
+First start: the OS boots & the EC2 User Data script is run
+Following starts: the OS boots up
+Then your application starts, caches get warmed up, and that can take time!
+
+During Hiberate:
+* The in-memory (RAM) state is preserved
+* The instance boot is much faster!(the OS is not stopped / restarted)
+* Under the hood: the RAM state is written to a file in the root EBS volume which must be encrypted
+* Root volume: must be EBS, encrypted, not instance store, and large
+* An instance cannot be hiberated more than 60 days.
+
+### AMI Overview
+* built for specific region   (can be copied across regions)
+* EC2 instance can be launched from : 
+** public AMI
+** Your own AMI
+** An AWS Marketplace AMI
+
 ## Network
 
 ## Storage
+
+### EBS 
+* An EBS (Elastic Block Store) Volume is a network drive you can attach to your instances while they run.
+* It allows your instances to persist data, even after their termination
+* They can only be mounted to one instance at a time (at the CCP level)
+* They are bound to a specific availability zone
+* Free tier: 30 GB of free EBS storage of type General Purpose (SSD) or Magnetic per month
+* can increase capacity of the drive over time
+* It can be detached from an EC2 instance and attached to another one quickly
+* Delete on termination attribute --checked by default.
+
+### EC2 Instance Store
+* EBS volumes are network drives with good but “limited” performance
+* If you need a high-performance hardware disk, use EC2 Instance Store
+* Better I/O performance
+* EC2 Instance Store lose their storage if they’re stopped (ephemeral)
+* Good for buffer / cache / scratch data / temporary content
+* Backups and Replication are your responsibility
 
 ## Security
 
