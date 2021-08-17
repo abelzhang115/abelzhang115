@@ -137,6 +137,9 @@ During Hiberate:
 * can increase capacity of the drive over time
 * It can be detached from an EC2 instance and attached to another one quickly
 * Delete on termination attribute --checked by default.
+![image](https://user-images.githubusercontent.com/85909185/129647972-e472d39b-2946-4979-b5be-c25a0a6da359.png)
+
+ * **Only gp2/gp3 and io1/io2 can be used as boot volumes SSD only** 
 
 ### EC2 Instance Store
 * EBS volumes are network drives with good but “limited” performance
