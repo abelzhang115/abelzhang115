@@ -141,6 +141,24 @@ During Hiberate:
 
  * **Only gp2/gp3 and io1/io2 can be used as boot volumes SSD only** 
 
+#### EBS Multi-Attache only io1/io2 family
+Attach the same EBS volume to multiple EC2 instances in the same AZ
+Each instance has full read & write permissions to the volume
+* Applications must manage concurrent write operations
+* must use a file system that's cluster-aware (not XFS..)
+
+#### EBS Encryption
+* Data at rest is encrypted inside the volume
+* All the data in flight moving between the instance and the volume is encrypted
+* All snapshots are encrypted
+* All volumes created from the snapshot
+* leverage key from KMS
+* how to encrypt an unencrypted EBS volume
+** create a snapshot
+** encrypt snapshot (using copy)
+** create new ebs vlume from the snapshot 
+** attach the encrypted volume to the original instance
+
 ### EC2 Instance Store
 * EBS volumes are network drives with good but “limited” performance
 * If you need a high-performance hardware disk, use EC2 Instance Store
