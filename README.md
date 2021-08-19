@@ -168,5 +168,34 @@ Each instance has full read & write permissions to the volume
 * Backups and Replication are your responsibility
 
 ## Security
+### Identity and Access Management , Global Servcie
+* Root account created by default, shouldn’t be used or shared
+* Users are people within your organization, and can be grouped
+* Groups only contain users, not other groups
+* Users don’t have to belong to a group, and user can belong to multiple groups
+#### IAM Permissions
+* users or groups can be assigned json documents called policies
+* thses policies define the permissions of the users/groups
+* apply least privilege principle
+json:
+ version:
+    statement:[
+      {
+         sid: 1 optional
+         effect: deny/allow
+         principal: {aws:account/user/roleto which the policy applied to}
+         action: ec2:Describe* or list of [cloudWatch:ListMetrics,cloudWatch:Describe*]
+         resource: *
+         condition: when the policy is in effect
+    ]
+Policy inheritance if user belongs to multiple groups.
+#### IAM password policy
+can setup password policy like min password length, require specific character types,allow change password, password expiration,prevent password reuse
+MFA-multi Factor Authentication
 
-
+### How can users access AWS?
+* AWS management console (protected by password + MFA)
+* CLI: access keys
+* SDK: access keys
+* users manage their own access keys access key id == user name secret access key = password
+* 
