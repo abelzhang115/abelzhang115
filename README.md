@@ -124,7 +124,34 @@ During Hiberate:
 ** Your own AMI
 ** An AWS Marketplace AMI
 
+### Standby
+You can put an instance that is in the InService state into the Standby state, update or troubleshoot the instance, and then return the instance to service. Instances that are on standby are still part of the Auto Scaling group, but they do not actively handle load balancer traffic.
+This feature helps you stop and start the instances or reboot them without worrying about Amazon EC2 Auto Scaling terminating the instances as part of its health checks or during scale-in events.
+Amazon EC2 Auto Scaling does not perform health checks on instances that are in a standby state. While the instance is in a standby state, its health status reflects the status that it had before you put it on standby. Amazon EC2 Auto Scaling does not perform a health check on the instance until you put it back in service.
+
+### Auto Scaling Group
+The ReplaceUnhealthy process terminates instances that are marked as unhealthy and then creates new instances to replace them. Amazon EC2 Auto Scaling stops replacing instances that are marked as unhealthy.
+The scheduled action tells the Amazon EC2 Auto Scaling group to perform a scaling action at specified times. To create a scheduled scaling action, you specify the start time when the scaling action should take effect, and the new minimum, maximum, and desired sizes for the scaling action.
+
 ## Network
+### Global Accelerator
+AWS Global Accelerator - AWS Global Accelerator utilizes the Amazon global network, allowing you to improve the performance of your applications by lowering first-byte latency (the round trip time for a packet to go from a client to your endpoint and back again) and jitter (the variation of latency), and increasing throughput (the amount of time it takes to transfer data) as compared to the public internet.
+AWS Global Accelerator optimizes the path to your application to keep packet loss, jitter, and latency consistently low.
+
+With Global Accelerator, you are provided two global static public IPs that act as a fixed entry point to your application, improving availability. On the back end, add or remove your AWS application endpoints, such as Application Load Balancers, Network Load Balancers, EC2 Instances, and Elastic IPs without making user-facing changes. Global Accelerator automatically re-routes your traffic to your nearest healthy available endpoint to mitigate endpoint failure.
+
+Global Accelerator improves performance for a wide range of applications over TCP or UDP by proxying packets at the edge to applications running in one or more AWS Regions. Global Accelerator is a good fit for non-HTTP use cases, such as gaming (UDP), IoT (MQTT), or Voice over IP, as well as for HTTP use cases that specifically require static IP addresses or deterministic, fast regional failover.
+
+while ELB provides load balancing within one Region, AWS Global Accelerator provides traffic management across multiple Regions.
+
+###Cloudfront
+Amazon CloudFront - Amazon CloudFront is a fast content delivery network (CDN) service that securely delivers data, videos, applications, and APIs to customers globally with low latency, high transfer speeds, all within a developer-friendly environment.
+
+AWS Global Accelerator and Amazon CloudFront are separate services that use the AWS global network and its edge locations around the world. CloudFront improves performance for both cacheable content (such as images and videos) and dynamic content (such as API acceleration and dynamic site delivery), while Global Accelerator improves performance for a wide range of applications over TCP or UDP.
+
+###Route 53
+Amazon Route 53 - Amazon Route 53 is a highly available and scalable cloud Domain Name System (DNS) web service. It is designed to give developers and businesses an extremely reliable and cost-effective way to route end users to Internet applications by translating names like www.example.com into the numeric IP addresses like 192.0.2.1 that computers use to connect to each other.
+
 
 ## Storage
 
@@ -167,6 +194,46 @@ Each instance has full read & write permissions to the volume
 * Good for buffer / cache / scratch data / temporary content
 * Backups and Replication are your responsibility
 
+
+
+###S3
+retention period - can specify retain util date for the object version
+different vresion of a single object can have different retention mode and period
+When you use bucket default settings, you don't specify a Retain Until Date. Instead, you specify a duration, in either days or years, for which every object version placed in the bucket should be protected.
+You can extend a retention period after you've applied a retention setting to an object version. To do this, submit a new lock request for the object version with a Retain Until Date that is later than the one currently configured for the object version. 
+
+####Versioning
+Once you version-enable a bucket, it can never return to an unversioned state. Versioning can only be suspended once it has been enabled.
+![image](https://user-images.githubusercontent.com/85909185/131612638-e96abad7-bd29-4da3-844e-75977c7e6c59.png)
+
+####S3 transfer acceleration
+Amazon S3 Transfer Acceleration enables fast, easy, and secure transfers of files over long distances between your client and an S3 bucket. Transfer Acceleration takes advantage of Amazon CloudFront’s globally distributed edge locations. As the data arrives at an edge location, data is routed to Amazon S3 over an optimized network path.
+
+Multipart upload allows you to upload a single object as a set of parts. Each part is a contiguous portion of the object's data. You can upload these object parts independently and in any order. If transmission of any part fails, you can retransmit that part without affecting other parts. After all parts of your object are uploaded, Amazon S3 assembles these parts and creates the object. If you're uploading large objects over a stable high-bandwidth network, use multipart uploading to maximize the use of your available bandwidth by uploading object parts in parallel for multi-threaded performance. If you're uploading over a spotty network, use multipart uploading to increase resiliency to network errors by avoiding upload restarts.
+
+ In general, when your object size reaches 100 MB, you should consider using multipart uploads instead of uploading the object in a single operation.
+####Transitioning objects using Amazon S3 Lifecycle
+*When you know that objects are infrequently accessed, you might transition them to the S3 Standard-IA storage class.
+*You might want to archive objects that you don't need to access in real time to the S3 Glacier storage class.
+![image](https://user-images.githubusercontent.com/85909185/131614088-06297bf7-6bcb-4c36-9e82-7a2276f94284.png)
+You can transition from the following:
+*The S3 Standard storage class to any other storage class.
+*Any storage class to the S3 Glacier or S3 Glacier Deep Archive storage classes.
+*The S3 Standard-IA storage class to the S3 Intelligent-Tiering or S3 One Zone-IA storage classes.
+*The S3 Intelligent-Tiering storage class to the S3 One Zone-IA storage class.
+*The S3 Glacier storage class to the S3 Glacier Deep Archive storage class.
+
+To summarize again, S3 Intelligent-Tiering, S3 Standard-IA, and S3 One Zone-IA have a minimum storage duration charge of 30 days (so instead of 24 hours, you end up paying for 30 days). S3 Standard-IA and S3 One Zone-IA also have retrieval charges (as the results are heavily referenced by other parts of the analytics pipeline, so the retrieval costs would be pretty high). Therefore, these 3 storage classes are not cost optimal for the given use-case.
+
+####Unsupported lifecycle transitions
+Amazon S3 does not support any of the following Lifecycle transitions.
+You can't transition from the following:
+*Any storage class to the S3 Standard storage class.
+**Any storage class to the Reduced Redundancy storage class.
+*The S3 Intelligent-Tiering storage class to the S3 Standard-IA storage class.
+*The S3 One Zone-IA storage class to the S3 Standard-IA or S3 Intelligent-Tiering storage classes.
+
+
 ## Security
 ### Identity and Access Management , Global Servcie
 * Root account created by default, shouldn’t be used or shared
@@ -199,3 +266,8 @@ MFA-multi Factor Authentication
 * SDK: access keys
 * users manage their own access keys access key id == user name secret access key = password
 * 
+
+##Kinesis Data Streams (KDS)
+ Amazon Kinesis Data Streams (KDS) is a massively scalable and durable real-time data streaming service. KDS can continuously capture gigabytes of data per second from hundreds of thousands of sources such as website clickstreams, database event streams, financial transactions, social media feeds, IT logs, and location-tracking events. However, the user is expected to manually provision an appropriate number of shards to process the expected volume of the incoming data stream. The throughput of an Amazon Kinesis data stream is designed to scale without limits via increasing the number of shards within a data stream. Therefore Kinesis Data Streams is not the right fit for this use-case.
+ 
+ 
