@@ -41,6 +41,9 @@ ID|Type|Scenarios
 4 | Spot instances | Spot Instances are ideal for workloads with flexible start and end times, or that can withstand interruptions. Spot Instances use unused Amazon EC2 computing capacity and offer you cost savings at up to 90% off of On-Demand prices.
 5 | Dedicated hosts | Dedicated Hosts are physical servers with Amazon EC2 instance capacity that is fully dedicated to your use. 
 
+![image](https://user-images.githubusercontent.com/85909185/132094414-d26b75af-5c09-4675-b53a-2a42d88947f0.png)
+
+
 ### EC2 Scalability
 Scalability involves beginning with only the resources you need and designing your architecture to automatically respond to changing demand by scaling out or in. As a result, you pay for only the resources you use. You don’t have to worry about a lack of computing capacity to meet your customers’ needs.
 Amazon EC2 Auto Scaling.Amazon EC2 Auto Scaling enables you to automatically add or remove Amazon EC2 instances in response to changing application demand. By automatically scaling your instances in and out as needed, you are able to maintain a greater sense of application availability.
@@ -72,6 +75,8 @@ control of outbound network
 * if your application is not accessible (time out), it's security group issue
 * all inbound traffic is blocked by default 
 * all outbound traffic is authorised by default 
+
+Security Groups are stateful, so allowing inbound traffic to the necessary ports enables the connection. Network ACLs are stateless, so you must allow both inbound and outbound traffic
 
 ### IP addresses
 private IP: Machines connect to WWW using a NAT + internet gateway (a proxy)
@@ -142,7 +147,17 @@ For example, you can use target tracking scaling to:
 
 Configure a target tracking scaling policy to keep the average aggregate CPU utilization of your Auto Scaling group at 50 percent. This meets the requirements specified in the given use-case and therefore, this is the correct option.
 
-Target Tracking Policy Overview: 
+#### auto scaling termination policy
+Per the default termination policy, the first priority is given to any allocation strategy for On-Demand vs Spot instances. As no such information has been provided for the given use-case, so this criterion can be ignored. The next priority is to consider any instance with the oldest launch template unless there is an instance that uses a launch configuration. So this rules out Instance A. Next, you need to consider any instance which has the oldest launch configuration. This implies Instance B will be selected for termination and Instance C will also be ruled out as it has the newest launch configuration. Instance D, which is closest to the next billing hour, is not selected as this criterion is last in the order of priority.
+
+On-demand /spot instances > oldest launch template /oldest launch configuration > next billing hour
+![image](https://user-images.githubusercontent.com/85909185/132090470-4b60ee8c-3a61-40c8-ade2-3798be934b58.png)
+
+
+### Application Load Balancer ALB
+![image](https://user-images.githubusercontent.com/85909185/131936223-1d7729e2-287c-40c0-ab50-7831299b0251.png)
+You can't specify publicly routable IP addresses as values for IP target type, so both these options are incorrect.
+
 
 ## Network
 ### Global Accelerator
@@ -171,7 +186,18 @@ Use Route 53 based geolocation routing policy to restrict distribution of conten
 Geolocation routing lets you choose the resources that serve your traffic based on the geographic location of your users, meaning the location that DNS queries originate from. For example, you might want all queries from Europe to be routed to an ELB load balancer in the Frankfurt region. You can also use geolocation routing to restrict the distribution of content to only the locations in which you have distribution rights.
 ![image](https://user-images.githubusercontent.com/85909185/131756367-f7021678-2ea3-43b8-806b-a0d548904722.png)
 
+### Transit gateway
+AWS Transit Gateway is a service that enables customers to connect their Amazon Virtual Private Clouds (VPCs) and their on-premises networks to a single gateway. With AWS Transit Gateway, you only have to create and manage a single connection from the central gateway into each Amazon VPC, on-premises data center, or remote office across your network. Transit Gateway acts as a hub that controls how traffic is routed among all the connected networks which act like spokes. So, this is a perfect use-case for the Transit Gateway.
+![image](https://user-images.githubusercontent.com/85909185/132094525-620dbbd7-4e35-4a77-920e-852cdd72852a.png)
 
+### VPC Peering 
+- A VPC peering connection is a networking connection between two VPCs that enables you to route traffic between them using private IPv4 addresses or IPv6 addresses. Instances in either VPC can communicate with each other as if they are within the same network. You can create a VPC peering connection between your VPCs, or with a VPC in another AWS account. The VPCs can be in different regions (also known as an inter-region VPC peering connection). VPC Peering helps connect two VPCs and is not transitive. It would require to create many peering connections between all the VPCs to have them connect. This alone wouldn't work, because we would need to also connect the on-premises data center through Direct Connect and Direct Connect Gateway, but that's not mentioned in this answer.
+
+### VPN Gateway
+A virtual private gateway (also known as a VPN Gateway) is the endpoint on the VPC side of your VPN connection. You can create a virtual private gateway before creating the VPC itself. VPN Gateway is a distractor here because we haven't mentioned a VPN.
+
+### Private Link 
+- AWS PrivateLink simplifies the security of data shared with cloud-based applications by eliminating the exposure of data to the public Internet. AWS PrivateLink provides private connectivity between VPCs, AWS services, and on-premises applications, securely on the Amazon network. Private Link is utilized to create a private connection between an application that is fronted by an NLB in an account, and an Elastic Network Interface (ENI) in another account, without the need of VPC peering, and allowing the connections between the two to remain within the AWS network.
 
 ## Storage
 
@@ -232,6 +258,10 @@ Amazon Elastic File System (Amazon EFS) provides a simple, scalable, fully manag
 Amazon EFS is a regional service storing data within and across multiple Availability Zones (AZs) for high availability and durability. Amazon EC2 instances can access your file system across AZs, regions, and VPCs, while on-premises servers can access using AWS Direct Connect or AWS VPN.
 
 You can connect to Amazon EFS file systems from EC2 instances in other AWS regions using an inter-region VPC peering connection, and from on-premises servers using an AWS VPN connection. So this is the correct option.
+
+Max I/O performance mode is used to scale to higher levels of aggregate throughput and operations per second. This scaling is done with a tradeoff of slightly higher latencies for file metadata operations. Highly parallelized applications and workloads, such as big data analysis, media processing, and genomic analysis, can benefit from this mode.
+![image](https://user-images.githubusercontent.com/85909185/132090340-a6ac7546-55a4-45ec-aa4a-22fd306c098f.png)
+
 
 ### S3
 #### performance 
@@ -367,6 +397,26 @@ Configure AWS WAF on the Application Load Balancer in a VPC
 You can use AWS WAF with your Application Load Balancer to allow or block requests based on the rules in a web access control list (web ACL). Geographic (Geo) Match Conditions in AWS WAF allows you to use AWS WAF to restrict application access based on the geographic location of your viewers. With geo match conditions you can choose the countries from which AWS WAF should allow access.
 
 Geo match conditions are important for many customers. For example, legal and licensing requirements restrict some customers from delivering their applications outside certain countries. These customers can configure a whitelist that allows only viewers in those countries. Other customers need to prevent the downloading of their encrypted software by users in certain countries. These customers can configure a blacklist so that end-users from those countries are blocked from downloading their software.
+
+## SQS
+Amazon Simple Queue Service (SQS) is a fully managed message queuing service that enables you to decouple and scale microservices, distributed systems, and serverless applications. SQS offers two types of message queues - Standard queues vs FIFO queues.
+
+For FIFO queues, the order in which messages are sent and received is strictly preserved (i.e. First-In-First-Out). On the other hand, the standard SQS queues offer best-effort ordering. This means that occasionally, messages might be delivered in an order different from which they were sent.
+
+By default, FIFO queues support up to 300 messages per second (300 send, receive, or delete operations per second). When you batch 10 messages per operation (maximum), FIFO queues can support up to 3,000 messages per second. Therefore you need to process 4 messages per operation so that the FIFO queue can support up to 1200 messages per second, which is well within the peak rate.
+![image](https://user-images.githubusercontent.com/85909185/131991239-f3ad1471-2384-4a51-948e-7d3f10b956b6.png)
+
+## Cloudwatch
+You can use CloudWatch Alarms to send an email via SNS whenever any of the EC2 instances breaches a certain threshold.
+
+## RDS
+If your workload is unpredictable, you can enable storage autoscaling for an Amazon RDS DB instance. With storage autoscaling enabled, when Amazon RDS detects that you are running out of free database space it automatically scales up your storage. Amazon RDS starts a storage modification for an autoscaling-enabled DB instance when these factors apply:
+*Free available space is less than 10 percent of the allocated storage.
+*The low-storage condition lasts at least five minutes.
+*At least six hours have passed since the last storage modification.
+The maximum storage threshold is the limit that you set for autoscaling the DB instance. You can't set the maximum storage threshold for autoscaling-enabled instances to a value greater than the maximum allocated storage.
+
+
 
 
 
