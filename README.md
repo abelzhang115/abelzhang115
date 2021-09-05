@@ -76,7 +76,21 @@ control of outbound network
 * all inbound traffic is blocked by default 
 * all outbound traffic is authorised by default 
 
+A security group acts as a virtual firewall that controls the traffic for one or more instances. When you launch an instance, you can specify one or more security groups; otherwise, we use the default security group. You can add rules to each security group that allows traffic to or from its associated instances. You can modify the rules for a security group at any time; the new rules are automatically applied to all instances that are associated with the security group. When we decide whether to allow traffic to reach an instance, we evaluate all the rules from all the security groups that are associated with the instance. The following are the characteristics of security group rules: By default, security groups allow all outbound traffic. Security group rules are always permissive; you can't create rules that deny access. Security groups are stateful
+
 Security Groups are stateful, so allowing inbound traffic to the necessary ports enables the connection. Network ACLs are stateless, so you must allow both inbound and outbound traffic
+
+### Using an IAM role to grant permissions to applications running on Amazon EC2 instances
+Applications that run on an EC2 instance must include AWS credentials in their AWS API requests. You could have your developers store AWS credentials directly within the EC2 instance and allow applications in that instance to use those credentials. But developers would then have to manage the credentials and ensure that they securely pass the credentials to each instance and update each EC2 instance when it's time to rotate the credentials. That's a lot of additional work.
+
+Instead, you can and should use an IAM role to manage temporary credentials for applications that run on an EC2 instance. When you use a role, you don't have to distribute long-term credentials (such as a user name and password or access keys) to an EC2 instance. Instead, the role supplies temporary permissions that applications can use when they make calls to other AWS resources. When you launch an EC2 instance, you specify an IAM role to associate with the instance. Applications that run on the instance can then use the role-supplied temporary credentials to sign API requests.
+
+Using roles to grant permissions to applications that run on EC2 instances requires a bit of extra configuration. An application running on an EC2 instance is abstracted from AWS by the virtualized operating system. Because of this extra separation, an additional step is needed to assign an AWS role and its associated permissions to an EC2 instance and make them available to its applications. This extra step is the creation of an instance profile that is attached to the instance. The instance profile contains the role and can provide the role's temporary credentials to an application that runs on the instance. Those temporary credentials can then be used in the application's API calls to access resources and to limit access to only those resources that the role specifies. Note that only one role can be assigned to an EC2 instance at a time, and all applications on the instance share the same role and permissions.
+
+Using roles in this way has several benefits. Because role credentials are temporary and rotated automatically, you don't have to manage credentials, and you don't have to worry about long-term security risks. In addition, if you use a single role for multiple instances, you can make a change to that one role and the change is propagated automatically to all the instances.
+
+![image](https://user-images.githubusercontent.com/85909185/132126818-01e37e6a-4b1b-450c-becc-ea3f7479a5c0.png)
+
 
 ### IP addresses
 private IP: Machines connect to WWW using a NAT + internet gateway (a proxy)
@@ -121,6 +135,8 @@ During Hiberate:
 * Under the hood: the RAM state is written to a file in the root EBS volume which must be encrypted
 * Root volume: must be EBS, encrypted, not instance store, and large
 * An instance cannot be hiberated more than 60 days.
+
+When you hibernate an instance, AWS signals the operating system to perform hibernation (suspend-to-disk). Hibernation saves the contents from the instance memory (RAM) to your Amazon EBS root volume. AWS then persists the instance's Amazon EBS root volume and any attached Amazon EBS data volumes. When you start your instance: The Amazon EBS root volume is restored to its previous state The RAM contents are reloaded The processes that were previously running on the instance are resumed Previously attached data volumes are reattached and the instance retains its instance ID
 
 ### AMI Overview
 * built for specific region   (can be copied across regions)
@@ -415,6 +431,83 @@ If your workload is unpredictable, you can enable storage autoscaling for an Ama
 *The low-storage condition lasts at least five minutes.
 *At least six hours have passed since the last storage modification.
 The maximum storage threshold is the limit that you set for autoscaling the DB instance. You can't set the maximum storage threshold for autoscaling-enabled instances to a value greater than the maximum allocated storage.
+
+![image](https://user-images.githubusercontent.com/85909185/132113363-5d47d776-2879-4a63-a839-99336e1a1cc9.png)
+
+
+## DynamoDB
+DynamoDB - Amazon DynamoDB is a key-value and document database that delivers single-digit millisecond performance at any scale. It's a fully managed, multi-region, multi-master, durable database with built-in security, backup and restore, and in-memory caching for internet-scale applications. DynamoDB is a NoSQL database and it's best suited to store data in key-value pairs.
+
+## RedShift
+Redshift - Amazon Redshift is a fully-managed petabyte-scale cloud-based data warehouse product designed for large scale data set storage and analysis. 
+
+## ElasticCache
+ElastiCache - Amazon ElastiCache allows you to seamlessly set up, run, and scale popular open-Source compatible in-memory data stores in the cloud. Build data-intensive apps or boost the performance of your existing databases by retrieving data from high throughput and low latency in-memory data stores. Amazon ElastiCache is a popular choice for real-time use cases like Caching, Session Stores, Gaming, Geospatial Services, Real-Time Analytics, and Queuing. Elasticache is used as a caching layer in front of relational databases. It is not a good fit to store data in key-value pairs from the IoT sources
+
+## Lambda
+### access to S3 bucket in the same AWS account
+I want my AWS Lambda function to be able to access my Amazon Simple Storage Service (Amazon S3) bucket. How can I do that?
+To give your Lambda function access to an Amazon S3 bucket in the same AWS account, do the following:
+1.    Create an AWS Identity and Access Management (IAM) role for the Lambda function that also grants access to the S3 bucket.
+2.    Configure the IAM role as the Lambda function's execution role.
+3.    Verify that the S3 bucket policy doesn't explicitly deny access to your Lambda function or its execution role.
+
+Important: If your S3 bucket and the function's IAM role are in different accounts, then you must also grant the required permissions on the S3 bucket policy.
+
+### cross-account access to AWS S3 bucket
+I want to grant another AWS account access to an object that is stored in an Amazon Simple Storage Service (Amazon S3) bucket. How can I provide cross-account access to Amazon S3 buckets?
+Use one of the following methods to grant cross-account access to objects that are stored in S3 buckets:
+
+*Resource-based policies and AWS Identity and Access Management (IAM) policies for programmatic-only access to S3 bucket objects
+*Resource-based Access Control List (ACL) and IAM policies for programmatic-only access to S3 bucket objects
+*Cross-account IAM roles for programmatic and console access to S3 bucket objects
+
+
+## Kinesis data firehose
+Amazon Kinesis Data Firehose is the easiest way to reliably load streaming data into data lakes, data stores, and analytics services. It can capture, transform, and deliver streaming data to Amazon S3, Amazon Redshift, Amazon Elasticsearch Service, generic HTTP endpoints, and service providers like Datadog, New Relic, MongoDB, and Splunk. It is a fully managed service that automatically scales to match the throughput of your data and requires no ongoing administration. It can also batch, compress, transform, and encrypt your data streams before loading, minimizing the amount of storage used and increasing security.
+
+You can easily create a Firehose delivery stream from the AWS Management Console, configure it with a few clicks, and start ingesting streaming data from hundreds of thousands of data sources to your specified destinations.
+You can also configure your data streams to automatically convert the incoming data to open and standards based formats like Apache Parquet and Apache ORC before the data is delivered.
+With Amazon Kinesis Data Firehose, there is no minimum fee or setup cost. You pay for the amount of data that you transmit through the service, if applicable, for converting data formats, and for Amazon VPC delivery and data transfer
+
+## Kinesis Data Streams
+Kinesis Data Streams - Amazon Kinesis Data Streams (KDS) is a massively scalable and durable real-time data streaming service. The throughput of an Amazon Kinesis data stream is designed to scale without limits via increasing the number of shards within a data stream. With Amazon Kinesis Data Streams, you can scale up to a sufficient number of shards (note, however, that you'll need to provision enough shards ahead of time). As it requires manual administration of shards, it's not the correct choice for the given use-case.
+
+## AWS Organizations
+AWS Organizations helps you centrally manage and govern your environment as you grow and scale your AWS resources. Using AWS Organizations, you can programmatically create new AWS accounts and allocate resources, group accounts to organize your workflows, apply policies to accounts or groups for governance, and simplify billing by using a single payment method for all of your accounts.
+
+In addition, AWS Organizations is integrated with other AWS services so you can define central configurations, security mechanisms, audit requirements, and resource sharing across accounts in your organization. AWS Organizations is available to all AWS customers at no additional charge.
+![image](https://user-images.githubusercontent.com/85909185/132112354-d70e072c-f08e-47f2-89e1-e8b146b380ad.png)
+
+## AWS Resource Access Manager
+AWS Resource Access Manager (RAM) helps you securely share your resources across AWS accounts, within your organization or organizational units (OUs) in AWS Organizations, and with IAM roles and IAM users for supported resource types. You can use AWS RAM to share transit gateways, subnets, AWS License Manager license configurations, Amazon Route 53 Resolver rules, and more resource types.
+![image](https://user-images.githubusercontent.com/85909185/132112393-098a0b51-1f4d-4304-87cd-37bb59121f86.png)
+
+## Aurora
+Aurora Replicas have two main purposes. You can issue queries to them to scale the read operations for your application. You typically do so by connecting to the reader endpoint of the cluster. That way, Aurora can spread the load for read-only connections across as many Aurora Replicas as you have in the cluster. Aurora Replicas also help to increase availability. If the writer instance in a cluster becomes unavailable, Aurora automatically promotes one of the reader instances to take its place as the new writer.
+
+While setting up a Multi-AZ deployment for Aurora, you create an Aurora replica or reader node in a different AZ.
+
+Multi-AZ for Aurora:
+![image](https://user-images.githubusercontent.com/85909185/132112473-017185cc-9458-45ff-a959-d5383fcc3b9c.png)
+
+You use the reader endpoint for read-only connections for your Aurora cluster. This endpoint uses a load-balancing mechanism to help your cluster handle a query-intensive workload. The reader endpoint is the endpoint that you supply to applications that do reporting or other read-only operations on the cluster. The reader endpoint load-balances connections to available Aurora Replicas in an Aurora DB cluster.
+![image](https://user-images.githubusercontent.com/85909185/132112485-3ccaafb1-9f2c-43ef-833a-bacacde2e841.png)
+
+
+## Secrets Manager
+AWS Secrets Manager helps you protect secrets needed to access your applications, services, and IT resources. The service enables you to easily rotate, manage, and retrieve database credentials, API keys, and other secrets throughout their lifecycle. Users and applications retrieve secrets with a call to Secrets Manager APIs, eliminating the need to hardcode sensitive information in plain text. Secrets Manager offers secret rotation with built-in integration for Amazon RDS, Amazon Redshift, and Amazon DocumentDB. The correct answer here is Secrets Manager
+
+## SSM Parameter store
+"SSM Parameter Store" - AWS Systems Manager Parameter Store (aka SSM Parameter Store) provides secure, hierarchical storage for configuration data management and secrets management. You can store data such as passwords, database strings, EC2 instance IDs, Amazon Machine Image (AMI) IDs, and license codes as parameter values. You can store values as plain text or encrypted data. You can reference Systems Manager parameters in your scripts, commands, SSM documents, and configuration and automation workflows by using the unique name that you specified when you created the parameter.
+
+SSM Parameter Store can serve as a secrets store, but you must rotate the secrets yourself, it doesn't have an automatic capability for this.
+
+
+
+
+
+
 
 
 
