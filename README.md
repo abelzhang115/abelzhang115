@@ -32,6 +32,26 @@ ID|Purpose|Scenarios
 4 | Accelerated computing instances | use hardware accelerators, or coprocessors, to perform some functions more efficiently than is possible in software running on CPUs. Examples of these functions include floating-point number calculations, graphics processing, and data pattern matching.
 5 | Storage Optimzied instances |  are designed for workloads that require high, sequential read and write access to large datasets on local storage. i.e OLTP high IOPS 
 
+### Instance metadata and user data
+Instance metadata is data about your instance that you can use to configure or manage the running instance. Instance metadata is divided into categories, for example, host name, events, and security groups.
+
+You can also use instance metadata to access user data that you specified when launching your instance. For example, you can specify parameters for configuring your instance, or include a simple script. You can build generic AMIs and use user data to modify the configuration files supplied at launch time. For example, if you run web servers for various small businesses, they can all use the same generic AMI and retrieve their content from the Amazon S3 bucket that you specify in the user data at launch. 
+
+EC2 instances can also include dynamic data, such as an instance identity document that is generated when the instance is launched.
+
+Although you can only access instance metadata and user data from within the instance itself, the data is not protected by authentication or cryptographic methods. Anyone who has direct access to the instance, and potentially any software running on the instance, can view its metadata. Therefore, you should not store sensitive data, such as passwords or long-lived encryption keys, as user data.
+
+### Using IAM Roles with Amazon EC2 Instances
+![image](https://user-images.githubusercontent.com/85909185/132144216-9010ac15-d26a-4ff3-a111-624f243e4655.png)
+Trusty --- which component/service can use the credential . usually EC2 instances as our code runs on it.
+Permission --- what actions can the trusted/selected service do. like read file from S3.
+![image](https://user-images.githubusercontent.com/85909185/132144287-a0c12417-a003-4594-b211-d8c13d8b8a63.png)
+
+then we can launch EC2 instance with the IAM role
+![image](https://user-images.githubusercontent.com/85909185/132144335-06c6966f-d506-49c0-ac91-59c30d228109.png)
+
+then in application, the harcoded credential can be removed and then AWS S3 SDK can automatically query meta-data to get temporary credential before call.
+
 ### EC2  Pricing
 ID|Type|Scenarios
 ------ | ------- | ----------
@@ -174,6 +194,9 @@ On-demand /spot instances > oldest launch template /oldest launch configuration 
 ![image](https://user-images.githubusercontent.com/85909185/131936223-1d7729e2-287c-40c0-ab50-7831299b0251.png)
 You can't specify publicly routable IP addresses as values for IP target type, so both these options are incorrect.
 
+![image](https://user-images.githubusercontent.com/85909185/132146172-9e0a96e2-70bd-4b80-b722-ac184369b2c1.png)
+
+
 
 ## Network
 ### Global Accelerator
@@ -202,6 +225,24 @@ Use Route 53 based geolocation routing policy to restrict distribution of conten
 Geolocation routing lets you choose the resources that serve your traffic based on the geographic location of your users, meaning the location that DNS queries originate from. For example, you might want all queries from Europe to be routed to an ELB load balancer in the Frankfurt region. You can also use geolocation routing to restrict the distribution of content to only the locations in which you have distribution rights.
 ![image](https://user-images.githubusercontent.com/85909185/131756367-f7021678-2ea3-43b8-806b-a0d548904722.png)
 
+### Single Region Mutil-VPC Connectivity
+![image](https://user-images.githubusercontent.com/85909185/132146506-267b125d-b4fc-472a-8f92-2a0e42ef4233.png)
+![image](https://user-images.githubusercontent.com/85909185/132146538-0c552a85-bc3b-4653-89bf-bd30c7c01d70.png)
+![image](https://user-images.githubusercontent.com/85909185/132146588-a5a3241b-43da-4065-aaad-0a31cca1d77d.png)
+
+![image](https://user-images.githubusercontent.com/85909185/132146542-3eb75029-3d3e-413a-9a56-b7184b52fbf4.png)
+![image](https://user-images.githubusercontent.com/85909185/132146562-e37fc4ec-7a4a-4087-8a19-447b16aa918e.png)
+![image](https://user-images.githubusercontent.com/85909185/132146569-690e8092-a2fe-44a8-91fb-5e275a0521ee.png)
+
+![image](https://user-images.githubusercontent.com/85909185/132146624-06e2ab78-004e-4530-9410-03e36c53ef7f.png)
+
+![image](https://user-images.githubusercontent.com/85909185/132146658-e739a4b0-56a3-486f-80ae-696366e6c499.png)
+
+### Multi Regions Mutil-VPC Connectivity
+![image](https://user-images.githubusercontent.com/85909185/132146719-17b1794a-a787-4f69-8af7-a9199cdf38f1.png)
+![image](https://user-images.githubusercontent.com/85909185/132146737-82de8492-c5d6-42fd-96c6-6652e3c1b393.png)
+
+
 ### Transit gateway
 AWS Transit Gateway is a service that enables customers to connect their Amazon Virtual Private Clouds (VPCs) and their on-premises networks to a single gateway. With AWS Transit Gateway, you only have to create and manage a single connection from the central gateway into each Amazon VPC, on-premises data center, or remote office across your network. Transit Gateway acts as a hub that controls how traffic is routed among all the connected networks which act like spokes. So, this is a perfect use-case for the Transit Gateway.
 ![image](https://user-images.githubusercontent.com/85909185/132094525-620dbbd7-4e35-4a77-920e-852cdd72852a.png)
@@ -214,6 +255,14 @@ A virtual private gateway (also known as a VPN Gateway) is the endpoint on the V
 
 ### Private Link 
 - AWS PrivateLink simplifies the security of data shared with cloud-based applications by eliminating the exposure of data to the public Internet. AWS PrivateLink provides private connectivity between VPCs, AWS services, and on-premises applications, securely on the Amazon network. Private Link is utilized to create a private connection between an application that is fronted by an NLB in an account, and an Elastic Network Interface (ENI) in another account, without the need of VPC peering, and allowing the connections between the two to remain within the AWS network.
+
+### VPC endpoint
+A VPC endpoint allows you to privately connect your VPC to supported AWS services without requiring an Internet gateway, NAT device, VPN connection, or AWS Direct Connect connection. Endpoints are virtual devices that are horizontally scaled, redundant, and highly available VPC components. They allow communication between instances in your VPC and services without imposing availability risks or bandwidth constraints on your network traffic.
+
+VPC endpoints enable you to reduce data transfer charges resulting from network communication between private VPC resources (such as Amazon Elastic Cloud Compute—or EC2—instances) and AWS Services (such as Amazon Quantum Ledger Database, or QLDB). Without VPC endpoints configured, communications that originate from within a VPC destined for public AWS services must egress AWS to the public Internet in order to access AWS services. This network path incurs outbound data transfer charges. Data transfer charges for traffic egressing from Amazon EC2 to the Internet vary based on volume. With VPC endpoints configured, communication between your VPC and the associated AWS service does not leave the Amazon network. If your workload requires you to transfer significant volumes of data between your VPC and AWS, you can reduce costs by leveraging VPC endpoints.
+
+
+
 
 ## Storage
 
@@ -277,6 +326,9 @@ You can connect to Amazon EFS file systems from EC2 instances in other AWS regio
 
 Max I/O performance mode is used to scale to higher levels of aggregate throughput and operations per second. This scaling is done with a tradeoff of slightly higher latencies for file metadata operations. Highly parallelized applications and workloads, such as big data analysis, media processing, and genomic analysis, can benefit from this mode.
 ![image](https://user-images.githubusercontent.com/85909185/132090340-a6ac7546-55a4-45ec-aa4a-22fd306c098f.png)
+
+#### EFS Infrequent Access
+Amazon EFS Infrequent Access (EFS IA) is a storage class that provides price/performance that is cost-optimized for files, not accessed every day, with storage prices up to 92% lower compared to Amazon EFS Standard. Therefore, this is the correct option.
 
 
 ### S3
@@ -355,11 +407,65 @@ Policy inheritance if user belongs to multiple groups.
 can setup password policy like min password length, require specific character types,allow change password, password expiration,prevent password reuse
 MFA-multi Factor Authentication
 
+### Policy types
+AWS supports six types of policies: identity-based policies, resource-based policies, permissions boundaries, Organizations SCPs, ACLs, and session policies.
+* Identity-based policies – Attach managed and inline policies to IAM identities (users, groups to which users belong, or roles). Identity-based policies grant permissions to an identity.
+* Resource-based policies – Attach inline policies to resources. The most common examples of resource-based policies are Amazon S3 bucket policies and IAM role trust policies. Resource-based policies grant permissions to the principal that is specified in the policy. Principals can be in the same account as the resource or in other accounts.
+* Permissions boundaries – Use a managed policy as the permissions boundary for an IAM entity (user or role). That policy defines the maximum permissions that the identity-based policies can grant to an entity, but does not grant permissions. Permissions boundaries do not define the maximum permissions that a resource-based policy can grant to an entity.
+* Organizations SCPs – Use an AWS Organizations service control policy (SCP) to define the maximum permissions for account members of an organization or organizational unit (OU). SCPs limit permissions that identity-based policies or resource-based policies grant to entities (users or roles) within the account, but do not grant permissions.
+* Access control lists (ACLs) – Use ACLs to control which principals in other accounts can access the resource to which the ACL is attached. ACLs are similar to resource-based policies, although they are the only policy type that does not use the JSON policy document structure. ACLs are cross-account permissions policies that grant permissions to the specified principal. ACLs cannot grant permissions to entities within the same account.
+* Session policies – Pass advanced session policies when you use the AWS CLI or AWS API to assume a role or a federated user. Session policies limit the permissions that the role or user's identity-based policies grant to the session. Session policies limit permissions for a created session, but do not grant permissions. For more information, see Session Policies.
+
+### IAM Role Scenarios
+IAM roles with temporary credentials are useful in the following situations:
+
+Temporary IAM user permissions – An IAM user can assume an IAM role to temporarily take on different permissions for a specific task.
+
+Federated user access – Instead of creating an IAM user, you can use existing identities from AWS Directory Service, your enterprise user directory, or a web identity provider. These are known as federated users. AWS assigns a role to a federated user when access is requested through an identity provider. For more information about federated users, see Federated users and roles in the IAM User Guide.
+
+Cross-account access – You can use an IAM role to allow someone (a trusted principal) in a different account to access resources in your account. Roles are the primary way to grant cross-account access. However, with some AWS services, you can attach a policy directly to a resource (instead of using a role as a proxy). To learn the difference between roles and resource-based policies for cross-account access, see How IAM roles differ from resource-based policies in the IAM User Guide.
+
+Cross-service access – Some AWS services use features in other AWS services. For example, when you make a call in a service, it's common for that service to run applications in Amazon EC2 or store objects in Amazon S3. A service might do this using the calling principal's permissions, using a service role, or using a service-linked role.
+
+Principal permissions – When you use an IAM user or role to perform actions in AWS, you are considered a principal. Policies grant permissions to a principal. When you use some services, you might perform an action that then triggers another action in a different service. In this case, you must have permissions to perform both actions. To see whether an action requires additional dependent actions in a policy, see Actions, Resources, and Condition Keys for AWS Lambda in the Service Authorization Reference.
+
+Service role – A service role is an IAM role that a service assumes to perform actions on your behalf. An IAM administrator can create, modify, and delete a service role from within IAM. For more information, see Creating a role to delegate permissions to an AWS service in the IAM User Guide.
+
+Service-linked role – A service-linked role is a type of service role that is linked to an AWS service. The service can assume the role to perform an action on your behalf. Service-linked roles appear in your IAM account and are owned by the service. An IAM administrator can view, but not edit the permissions for service-linked roles.
+
+Applications running on Amazon EC2 – You can use an IAM role to manage temporary credentials for applications that are running on an EC2 instance and making AWS CLI or AWS API requests. This is preferable to storing access keys within the EC2 instance. To assign an AWS role to an EC2 instance and make it available to all of its applications, you create an instance profile that is attached to the instance. An instance profile contains the role and enables programs that are running on the EC2 instance to get temporary credentials. For more information, see Using an IAM role to grant permissions to applications running on Amazon EC2 instances in the IAM User Guide.
+
+#### How IAM roles differ from resource-based policies
+For example, assume that you manage AccountA and AccountB. In AccountA, you have the Amazon S3 bucket named BucketA. You attach a resource-based policy to BucketA that allows all principals in AccountB full access to objects in your bucket. They can create, read, or delete any objects in that bucket. In AccountB, you attach a policy to the IAM user named User2. That policy allows the user read-only access to the objects in BucketA. That means that User2 can view the objects, but not create, edit, or delete them.
+![image](https://user-images.githubusercontent.com/85909185/132144807-cfaa63f4-751a-40d6-a957-94700764ab36.png)
+
+AccountA gives AccountB full access to BucketA by naming AccountB as a principal in the resource-based policy. As a result, AccountB is authorized to perform any action on BucketA, and the AccountB administrator can delegate access to its users in AccountB.
+
+The AccountB root user has all of the permissions that are granted to the account. Therefore, the root user has full access to BucketA.
+
+The AccountB administrator does not give access to User1. By default, users do not have any permissions except those that are explicitly granted. Therefore, User1 does not have access to BucketA.
+
+The AccountB administrator grants User2 read-only access to BucketA. User2 can view the objects in the bucket. The maximum level of access that AccountB can delegate is the access level that is granted to the account. In this case, the resource-based policy granted full access to AccountB, but User2 is granted only read-only access.
+
 ### How can users access AWS?
 * AWS management console (protected by password + MFA)
 * CLI: access keys
 * SDK: access keys
 * users manage their own access keys access key id == user name secret access key = password
+
+### Amazon Cognito User Pools
+ A user pool is a user directory in Amazon Cognito. You can leverage Amazon Cognito User Pools to either provide built-in user management or integrate with external identity providers, such as Facebook, Twitter, Google+, and Amazon. Whether your users sign-in directly or through a third party, all members of the user pool have a directory profile that you can access through a Software Development Kit (SDK).
+ User pools provide: 1. Sign-up and sign-in services. 2. A built-in, customizable web UI to sign in users. 3. Social sign-in with Facebook, Google, Login with Amazon, and Sign in with Apple, as well as sign-in with SAML identity providers from your user pool. 4. User directory management and user profiles. 5. Security features such as multi-factor authentication (MFA), checks for compromised credentials, account takeover protection, and phone and email verification. 6. Customized workflows and user migration through AWS Lambda triggers.
+
+After creating an Amazon Cognito user pool, in API Gateway, you must then create a COGNITO_USER_POOLS authorizer that uses the user pool.
+![image](https://user-images.githubusercontent.com/85909185/132145761-33c64294-b376-496a-9cfd-957cdf3bf09d.png)
+
+### Access Control
+![image](https://user-images.githubusercontent.com/85909185/132146039-c0b7a8a9-1614-45f4-80a8-e7d6776454e0.png)
+
+### differences between Cognito User Pools and Cognito Identity Pools:
+![image](https://user-images.githubusercontent.com/85909185/132146223-2dfa8444-2595-426f-8c94-4fad5efa9cf8.png)
+
 
 
 ### CMK vs KMS
@@ -421,6 +527,18 @@ For FIFO queues, the order in which messages are sent and received is strictly p
 
 By default, FIFO queues support up to 300 messages per second (300 send, receive, or delete operations per second). When you batch 10 messages per operation (maximum), FIFO queues can support up to 3,000 messages per second. Therefore you need to process 4 messages per operation so that the FIFO queue can support up to 1200 messages per second, which is well within the peak rate.
 ![image](https://user-images.githubusercontent.com/85909185/131991239-f3ad1471-2384-4a51-948e-7d3f10b956b6.png)
+
+
+### SNS
+With SQS, you can use FIFO (First-In-First-Out) queues to preserve the order in which messages are sent and received, and to avoid that a message is processed more than once.
+![image](https://user-images.githubusercontent.com/85909185/132145170-8e318b46-b382-4130-89cb-5c31799ea487.png)
+
+* Ordering – You configure a message group by including a message group ID when publishing a message to a FIFO topic. 
+* Deduplication – Distributed systems (like SNS) and client applications sometimes generate duplicate messages. You can avoid duplicated message deliveries from the topic in two ways: either by enabling content-based deduplication on the topic, or by adding a deduplication ID to the messages that you publish. If you subscribe a FIFO queue to a FIFO topic, the deduplication ID is passed to the queue and it is used by SQS to avoid duplicate messages being received.
+* You can use FIFO topics and queues together to simplify the implementation of applications where the order of operations and events is critical, or when you cannot tolerate duplicates.
+![image](https://user-images.githubusercontent.com/85909185/132145261-6c7032a2-771a-42ae-94f0-de7bc172c105.png)
+
+
 
 ## Cloudwatch
 You can use CloudWatch Alarms to send an email via SNS whenever any of the EC2 instances breaches a certain threshold.
@@ -502,6 +620,9 @@ AWS Secrets Manager helps you protect secrets needed to access your applications
 "SSM Parameter Store" - AWS Systems Manager Parameter Store (aka SSM Parameter Store) provides secure, hierarchical storage for configuration data management and secrets management. You can store data such as passwords, database strings, EC2 instance IDs, Amazon Machine Image (AMI) IDs, and license codes as parameter values. You can store values as plain text or encrypted data. You can reference Systems Manager parameters in your scripts, commands, SSM documents, and configuration and automation workflows by using the unique name that you specified when you created the parameter.
 
 SSM Parameter Store can serve as a secrets store, but you must rotate the secrets yourself, it doesn't have an automatic capability for this.
+
+## Resource Access Manager
+AWS Resource Access Manager (RAM) is a service that enables you to easily and securely share AWS resources with any AWS account or within your AWS Organization. You can share AWS Transit Gateways, Subnets, AWS License Manager configurations, and Amazon Route 53 Resolver rules resources with RAM. RAM eliminates the need to create duplicate resources in multiple accounts, reducing the operational overhead of managing those resources in every single account you own. You can create resources centrally in a multi-account environment, and use RAM to share those resources across accounts in three simple steps: create a Resource Share, specify resources, and specify accounts. RAM is available to you at no additional charge.
 
 
 
