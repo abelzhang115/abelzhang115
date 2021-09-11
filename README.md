@@ -196,6 +196,8 @@ You can't specify publicly routable IP addresses as values for IP target type, s
 
 ![image](https://user-images.githubusercontent.com/85909185/132146172-9e0a96e2-70bd-4b80-b722-ac184369b2c1.png)
 
+### NAT gateway vs NAT instance
+![image](https://user-images.githubusercontent.com/85909185/132929543-092ccf08-16ec-4953-8b05-8de255a668f9.png)
 
 
 ## Network
@@ -262,7 +264,46 @@ A VPC endpoint allows you to privately connect your VPC to supported AWS service
 VPC endpoints enable you to reduce data transfer charges resulting from network communication between private VPC resources (such as Amazon Elastic Cloud Compute—or EC2—instances) and AWS Services (such as Amazon Quantum Ledger Database, or QLDB). Without VPC endpoints configured, communications that originate from within a VPC destined for public AWS services must egress AWS to the public Internet in order to access AWS services. This network path incurs outbound data transfer charges. Data transfer charges for traffic egressing from Amazon EC2 to the Internet vary based on volume. With VPC endpoints configured, communication between your VPC and the associated AWS service does not leave the Amazon network. If your workload requires you to transfer significant volumes of data between your VPC and AWS, you can reduce costs by leveraging VPC endpoints.
 
 
+### VPN CloudHub
+If you have multiple AWS Site-to-Site VPN connections, you can provide secure communication between sites using the AWS VPN CloudHub. This enables your remote sites to communicate with each other, and not just with the VPC. Sites that use AWS Direct Connect connections to the virtual private gateway can also be part of the AWS VPN CloudHub. The VPN CloudHub operates on a simple hub-and-spoke model that you can use with or without a VPC. This design is suitable if you have multiple branch offices and existing internet connections and would like to implement a convenient, potentially low-cost hub-and-spoke model for primary or backup connectivity between these remote offices.
+![image](https://user-images.githubusercontent.com/85909185/132929742-85f91247-0184-4008-b5ff-711396879fae.png)
 
+### Internet Gateway
+An Internet Gateway is a horizontally scaled, redundant, and highly available VPC component that allows communication between your VPC and the internet.
+
+An Internet Gateway serves two purposes: to provide a target in your VPC route tables for internet-routable traffic and to perform network address translation (NAT) for instances that have been assigned public IPv4 addresses. 
+
+#### Enable internet access
+To enable access to or from the internet for instances in a subnet in a VPC, you must do the following.
+*Create an internet gateway and attach it to your VPC.
+*Add a route to your subnet's route table that directs internet-bound traffic to the internet gateway.
+*Ensure that instances in your subnet have a globally unique IP address (public IPv4 address, Elastic IP address, or IPv6 address).
+*Ensure that your network access control lists and security group rules allow the relevant traffic to flow to and from your instance.
+
+#### Public and private subnets
+If a subnet is associated with a route table that has a route to an internet gateway, it's known as a public subnet. If a subnet is associated with a route table that does not have a route to an internet gateway, it's known as a private subnet.
+
+In your public subnet's route table, you can specify a route for the internet gateway to all destinations not explicitly known to the route table (0.0.0.0/0 for IPv4 or ::/0 for IPv6). Alternatively, you can scope the route to a narrower range of IP addresses; for example, the public IPv4 addresses of your company’s public endpoints outside of AWS, or the Elastic IP addresses of other Amazon EC2 instances outside your VPC.
+
+#### IP addresses and NAT
+
+To enable communication over the internet for IPv4, your instance must have a public IPv4 address or an Elastic IP address that's associated with a private IPv4 address on your instance. Your instance is only aware of the private (internal) IP address space defined within the VPC and subnet. The internet gateway logically provides the one-to-one NAT on behalf of your instance, so that when traffic leaves your VPC subnet and goes to the internet, the reply address field is set to the public IPv4 address or Elastic IP address of your instance, and not its private IP address. Conversely, traffic that's destined for the public IPv4 address or Elastic IP address of your instance has its destination address translated into the instance's private IPv4 address before the traffic is delivered to the VPC.
+
+To enable communication over the internet for IPv6, your VPC and subnet must have an associated IPv6 CIDR block, and your instance must be assigned an IPv6 address from the range of the subnet. IPv6 addresses are globally unique, and therefore public by default.
+
+In the following diagram, Subnet 1 in the VPC is a public subnet. It's associated with a custom route table that points all internet-bound IPv4 traffic to an internet gateway. The instance has an Elastic IP address, which enables communication with the internet.
+![image](https://user-images.githubusercontent.com/85909185/132931120-bff8317e-fbc6-4a8a-9292-d569c7c05efc.png)
+
+#### Internet access for default and nondefault VPCs
+The following table provides an overview of whether your VPC automatically comes with the components required for internet access over IPv4 or IPv6.
+
+Component!Default VPC!Nondefault VPC
+---------|-----------|--------------
+Internet gateway	| Yes	| Yes, if you created the VPC using the first or second option in the VPC wizard. Otherwise, you must manually create and attach the internet gateway.
+Route table with route to internet gateway for IPv4 traffic (0.0.0.0/0)	| Yes	| Yes, if you created the VPC using the first or second option in the VPC wizard. Otherwise, you must manually create the route table and add the route.
+Route table with route to internet gateway for IPv6 traffic (::/0)	| No	| Yes, if you created the VPC using the first or second option in the VPC wizard, and if you specified the option to associate an IPv6 CIDR block with the VPC. Otherwise, you must manually create the route table and add the route.
+Public IPv4 address automatically assigned to instance launched into subnet	| Yes (default subnet)	| No (nondefault subnet)
+IPv6 address automatically assigned to instance launched into subnet |	No (default subnet)	| No (nondefault subnet)
 
 ## Storage
 
@@ -474,6 +515,8 @@ Deleting a customer master key (CMK) in AWS Key Management Service (AWS KMS) is 
 
 
 ## Kinesis Data Streams (KDS)
+![image](https://user-images.githubusercontent.com/85909185/132930171-01fb6835-4c2d-4120-ac23-26a89fa9d8c2.png)
+
  Amazon Kinesis Data Streams (KDS) is a massively scalable and durable real-time data streaming service. KDS can continuously capture gigabytes of data per second from hundreds of thousands of sources such as website clickstreams, database event streams, financial transactions, social media feeds, IT logs, and location-tracking events.The throughput of an Amazon Kinesis data stream is designed to scale without limits via increasing the number of shards within a data stream.
 
 ### When should I use Amazon Kinesis Data Streams, and when should I use Amazon SQS?
@@ -528,6 +571,13 @@ For FIFO queues, the order in which messages are sent and received is strictly p
 By default, FIFO queues support up to 300 messages per second (300 send, receive, or delete operations per second). When you batch 10 messages per operation (maximum), FIFO queues can support up to 3,000 messages per second. Therefore you need to process 4 messages per operation so that the FIFO queue can support up to 1200 messages per second, which is well within the peak rate.
 ![image](https://user-images.githubusercontent.com/85909185/131991239-f3ad1471-2384-4a51-948e-7d3f10b956b6.png)
 
+Amazon SQS provides short polling and long polling to receive messages from a queue. By default, queues use short polling. With short polling, Amazon SQS sends the response right away, even if the query found no messages. With long polling, Amazon SQS sends a response after it collects at least one available message, up to the maximum number of messages specified in the request. Amazon SQS sends an empty response only if the polling wait time expires.
+
+Long polling makes it inexpensive to retrieve messages from your Amazon SQS queue as soon as the messages are available. Using long polling can reduce the cost of using SQS because you can reduce the number of empty receives.
+
+![image](https://user-images.githubusercontent.com/85909185/132929652-67398128-b8b5-4054-b053-4dd006973652.png)
+
+
 
 ### SNS
 With SQS, you can use FIFO (First-In-First-Out) queues to preserve the order in which messages are sent and received, and to avoid that a message is processed more than once.
@@ -551,6 +601,11 @@ If your workload is unpredictable, you can enable storage autoscaling for an Ama
 The maximum storage threshold is the limit that you set for autoscaling the DB instance. You can't set the maximum storage threshold for autoscaling-enabled instances to a value greater than the maximum allocated storage.
 
 ![image](https://user-images.githubusercontent.com/85909185/132113363-5d47d776-2879-4a63-a839-99336e1a1cc9.png)
+
+When you provision an RDS Multi-AZ DB Instance, Amazon RDS automatically creates a primary DB Instance and synchronously replicates the data to a standby instance in a different Availability Zone (AZ). Each AZ runs on its own physically distinct, independent infrastructure, and is engineered to be highly reliable.
+the standby is not a read replica as it does not accept read request. 
+![image](https://user-images.githubusercontent.com/85909185/132929205-6b281d8b-e91b-469c-a74d-fe1467769b79.png)
+
 
 
 ## DynamoDB
@@ -623,6 +678,8 @@ SSM Parameter Store can serve as a secrets store, but you must rotate the secret
 
 ## Resource Access Manager
 AWS Resource Access Manager (RAM) is a service that enables you to easily and securely share AWS resources with any AWS account or within your AWS Organization. You can share AWS Transit Gateways, Subnets, AWS License Manager configurations, and Amazon Route 53 Resolver rules resources with RAM. RAM eliminates the need to create duplicate resources in multiple accounts, reducing the operational overhead of managing those resources in every single account you own. You can create resources centrally in a multi-account environment, and use RAM to share those resources across accounts in three simple steps: create a Resource Share, specify resources, and specify accounts. RAM is available to you at no additional charge.
+
+
 
 
 
