@@ -2,6 +2,15 @@
 
 core concept: Region, availability zone. global services (route 53, IAM, cloudfront, WAF).
 
+## Availability Zone
+An Availability Zone is represented by a region code followed by a letter identifier; for example, us-east-1a. To ensure that resources are distributed across the Availability Zones for a region, AWS maps Availability Zones to names for each AWS account. For example, the Availability Zone us-west-2a for one AWS account might not be the same location as us-west-2a for another AWS account.
+
+To coordinate Availability Zones across accounts, you must use the AZ ID, which is a unique and consistent identifier for an Availability Zone. For example, usw2-az2 is an AZ ID for the us-west-2 region and it has the same location in every AWS account.
+
+Viewing AZ IDs enables you to determine the location of resources in one account relative to the resources in another account. For example, if you share a subnet in the Availability Zone with the AZ ID usw2-az2 with another account, this subnet is available to that account in the Availability Zone whose AZ ID is also usw2-az2.
+
+You can view the AZ IDs by going to the service health section of the EC2 Dashboard via your AWS Management Console.
+
 ## Compute
 
 EC2- Elastic Compute Cloud = Infrastructure As a Service
@@ -183,6 +192,14 @@ For example, you can use target tracking scaling to:
 
 Configure a target tracking scaling policy to keep the average aggregate CPU utilization of your Auto Scaling group at 50 percent. This meets the requirements specified in the given use-case and therefore, this is the correct option.
 
+#### default termination policy
+It selects the Availability Zone with two instances, and terminates the instance that was launched from the oldest launch template or launch configuration. If the instances were launched from the same launch template or launch configuration, Amazon EC2 Auto Scaling selects the instance that is closest to the next billing hour and terminates it.
+
+#### Dynamic scaling policy types
+*Target tracking scaling—Increase or decrease the current capacity of the group based on a target value for a specific metric. This is similar to the way that your thermostat maintains the temperature of your home—you select a temperature and the thermostat does the rest.
+*Step scaling—Increase or decrease the current capacity of the group based on a set of scaling adjustments, known as step adjustments, that vary based on the size of the alarm breach.
+*Simple scaling—Increase or decrease the current capacity of the group based on a single scaling adjustment.
+
 #### auto scaling termination policy
 Per the default termination policy, the first priority is given to any allocation strategy for On-Demand vs Spot instances. As no such information has been provided for the given use-case, so this criterion can be ignored. The next priority is to consider any instance with the oldest launch template unless there is an instance that uses a launch configuration. So this rules out Instance A. Next, you need to consider any instance which has the oldest launch configuration. This implies Instance B will be selected for termination and Instance C will also be ruled out as it has the newest launch configuration. Instance D, which is closest to the next billing hour, is not selected as this criterion is last in the order of priority.
 
@@ -211,6 +228,10 @@ Global Accelerator improves performance for a wide range of applications over TC
 
 while ELB provides load balancing within one Region, AWS Global Accelerator provides traffic management across multiple Regions.
 
+can be used to provide single entry points for multipe region /applications.
+![image](https://user-images.githubusercontent.com/85909185/132972233-1bf9ad8c-438e-4f4c-aba9-0f73ea11852c.png)
+
+
 ###Cloudfront
 Amazon CloudFront - Amazon CloudFront is a fast content delivery network (CDN) service that securely delivers data, videos, applications, and APIs to customers globally with low latency, high transfer speeds, all within a developer-friendly environment.
 
@@ -220,12 +241,103 @@ dynamic content determined at request time and proxy methods send to origin dire
 
 ![image](https://user-images.githubusercontent.com/85909185/131621889-0717e582-3ec7-423f-ba64-e89682870987.png)
 
+Field-level encryption allows you to enable your users to securely upload sensitive information to your web servers. The sensitive information provided by your users is encrypted at the edge, close to the user, and remains encrypted throughout your entire application stack. This encryption ensures that only applications that need the data—and have the credentials to decrypt it—are able to do so.
+
+To use field-level encryption, when you configure your CloudFront distribution, specify the set of fields in POST requests that you want to be encrypted, and the public key to use to encrypt them. You can encrypt up to 10 data fields in a request. (You can’t encrypt all of the data in a request with field-level encryption; you must specify individual fields to encrypt.)
+
 
 ###Route 53
+Amazon Route 53 is a highly available and scalable Domain Name System (DNS) web service. You can use Route 53 to perform three main functions in any combination: domain registration, DNS routing, and health checking.
+#### Register domain names
+Your website needs a name, such as example.com. Route 53 lets you register a name for your website or web application, known as a domain name.
+#### Route internet traffic to the resources for your domain
+When a user opens a web browser and enters your domain name (example.com) or subdomain name (acme.example.com) in the address bar, Route 53 helps connect the browser with your website or web application.
+#### Check the health of your resources
+Route 53 sends automated requests over the internet to a resource, such as a web server, to verify that it's reachable, available, and functional. You also can choose to receive notifications when a resource becomes unavailable and choose to route internet traffic away from unhealthy resources.
+
+
 Amazon Route 53 - Amazon Route 53 is a highly available and scalable cloud Domain Name System (DNS) web service. It is designed to give developers and businesses an extremely reliable and cost-effective way to route end users to Internet applications by translating names like www.example.com into the numeric IP addresses like 192.0.2.1 that computers use to connect to each other.
 Use Route 53 based geolocation routing policy to restrict distribution of content to only the locations in which you have distribution rights
 Geolocation routing lets you choose the resources that serve your traffic based on the geographic location of your users, meaning the location that DNS queries originate from. For example, you might want all queries from Europe to be routed to an ELB load balancer in the Frankfurt region. You can also use geolocation routing to restrict the distribution of content to only the locations in which you have distribution rights.
+TLD is the abbreviation for Top Level Domain
 ![image](https://user-images.githubusercontent.com/85909185/131756367-f7021678-2ea3-43b8-806b-a0d548904722.png)
+
+#### How Amazon Route 53 routes traffic for your domain
+After you configure Amazon Route 53 to route your internet traffic to your resources, such as web servers or Amazon S3 buckets, here's what happens in just a few milliseconds when someone requests content for www.example.com:
+
+![image](https://user-images.githubusercontent.com/85909185/132937582-6ddc695c-40cf-4774-9078-1c2cb2127516.png)
+
+#### Choosing a routing policy
+When you create a record, you choose a routing policy, which determines how Amazon Route 53 responds to queries:
+
+*Simple routing policy – Use for a single resource that performs a given function for your domain, for example, a web server that serves content for the example.com website.
+*Failover routing policy – Use when you want to configure active-passive failover.
+*Geolocation routing policy – Use when you want to route traffic based on the location of your users.
+*Geoproximity routing policy – Use when you want to route traffic based on the location of your resources and, optionally, shift traffic from resources in one location to resources in another.You can also optionally choose to route more traffic or less to a given resource by specifying a value, known as a bias. A bias expands or shrinks the size of the geographic region from which traffic is routed to a resource.
+*Latency routing policy – Use when you have resources in multiple AWS Regions and you want to route traffic to the Region that provides the best latency with less round-trip time.
+*Multivalue answer routing policy – Use when you want Route 53 to respond to DNS queries with up to eight healthy records selected at random.
+*Weighted routing policy – Use to route traffic to multiple resources in proportions that you specify.
+
+#### Comparison of alias and CNAME records
+Alias records are similar to CNAME records, but there are some important differences. The following list compares alias records and CNAME records.
+
+Resources that you can redirect queries to
+Alias records
+An alias record can only redirect queries to selected AWS resources, such as the following:
+
+Amazon S3 buckets
+
+CloudFront distributions
+
+Another record in the same Route 53 hosted zone
+
+For example, you can create an alias record named acme.example.com that redirects queries to an Amazon S3 bucket that is also named acme.example.com. You can also create an acme.example.com alias record that redirects queries to a record named zenith.example.com in the example.com hosted zone.
+
+CNAME records
+A CNAME record can redirect DNS queries to any DNS record. For example, you can create a CNAME record that redirects queries from acme.example.com to zenith.example.com or to acme.example.org. You don't need to use Route 53 as the DNS service for the domain that you're redirecting queries to.
+
+Creating records that have the same name as the domain (records at the zone apex)
+Alias records
+In most configurations, you can create an alias record that has the same name as the hosted zone (the zone apex). The one exception is when you want to redirect queries from the zone apex (such as example.com) to a record in the same hosted zone that has a type of CNAME (such as zenith.example.com). The alias record must have the same type as the record you're routing traffic to, and creating a CNAME record for the zone apex isn't supported even for an alias record.
+
+CNAME records
+You can't create a CNAME record that has the same name as the hosted zone (the zone apex). This is true both for hosted zones for domain names (example.com) and for hosted zones for subdomains (zenith.example.com).
+
+Pricing for DNS queries
+Alias records
+Route 53 doesn't charge for alias queries to AWS resources. For more information, see Amazon Route 53 Pricing.
+
+CNAME records
+Route 53 charges for CNAME queries.
+
+Note
+If you create a CNAME record that redirects to the name of another record in a Route 53 hosted zone (the same hosted zone or another hosted zone), each DNS query is charged as two queries:
+
+Route 53 responds to the first DNS query with the name of the record that you want to redirect to.
+
+Then the DNS resolver must submit another query for the record in the first response to get information about where to direct traffic, for example, the IP address of a web server.
+
+If the CNAME record redirects to the name of a record that is hosted with another DNS service, Route 53 charges for one query. The other DNS service might charge for the second query.
+
+Record type specified in the DNS query
+Alias records
+Route 53 responds to a DNS query only when the name of the alias record (such as acme.example.com) and the type of the alias record (such as A or AAAA) match the name and type in the DNS query.
+
+CNAME records
+A CNAME record redirects DNS queries for a record name regardless of the record type specified in the DNS query, such as A or AAAA.
+
+How records are listed in dig or nslookup queries
+Alias records
+In the response to a dig or nslookup query, an alias record is listed as the record type that you specified when you created the record, such as A or AAAA. (The record type that you specify for an alias record depends on the resource that you're routing traffic to. For example, to route traffic to an S3 bucket, you specify A for the type.) The alias property is visible only in the Route 53 console or in the response to a programmatic request, such as an AWS CLI list-resource-record-sets command.
+
+CNAME records
+A CNAME record is listed as a CNAME record in response to dig or nslookup queries.
+
+### records 
+* A CNAME record maps DNS queries for the name of the current record, such as acme.example.com, to another domain (example.com or example.net) or subdomain (acme.example.com or zenith.example.org).
+* A record - Used to point a domain or subdomain to an IP address. 'A record' cannot be used to map one domain name to another.
+* PTR record - A Pointer (PTR) record resolves an IP address to a fully-qualified domain name (FQDN) as an opposite to what A record does. PTR records are also called Reverse DNS records. 'PTR record' cannot be used to map one domain name to another.
+* Alias Record - Alias records let you route traffic to selected AWS resources, such as CloudFront distributions and Amazon S3 buckets. They also let you route traffic from one record in a hosted zone to another record. 3rd party websites do not qualify for these as we have no control over those. 'Alias record' cannot be used to map one domain name to another.
 
 ### Single Region Mutil-VPC Connectivity
 ![image](https://user-images.githubusercontent.com/85909185/132146506-267b125d-b4fc-472a-8f92-2a0e42ef4233.png)
@@ -304,6 +416,12 @@ Route table with route to internet gateway for IPv4 traffic (0.0.0.0/0)	| Yes	| 
 Route table with route to internet gateway for IPv6 traffic (::/0)	| No	| Yes, if you created the VPC using the first or second option in the VPC wizard, and if you specified the option to associate an IPv6 CIDR block with the VPC. Otherwise, you must manually create the route table and add the route.
 Public IPv4 address automatically assigned to instance launched into subnet	| Yes (default subnet)	| No (nondefault subnet)
 IPv6 address automatically assigned to instance launched into subnet |	No (default subnet)	| No (nondefault subnet)
+
+### Network ACLs
+A network access control list (ACL) is an optional layer of security for your VPC that acts as a firewall for controlling traffic in and out of one or more subnets. You might set up network ACLs with rules similar to your security groups in order to add an additional layer of security to your VPC.
+*Your VPC automatically comes with a modifiable default network ACL. By default, it allows all inbound and outbound IPv4 traffic and, if applicable, IPv6 traffic.
+*You can create a custom network ACL and associate it with a subnet. By default, each custom network ACL denies all inbound and outbound traffic until you add rules.
+
 
 ## Storage
 
@@ -420,6 +538,11 @@ You can't transition from the following:
 **Any storage class to the Reduced Redundancy storage class.
 *The S3 Intelligent-Tiering storage class to the S3 Standard-IA storage class.
 *The S3 One Zone-IA storage class to the S3 Standard-IA or S3 Intelligent-Tiering storage classes.
+
+#### bucket policy
+A bucket policy is a type of resource-based policy that can be used to grant permissions to the principal that is specified in the policy. Principals can be in the same account as the resource or in other accounts. For cross-account permissions to other AWS accounts or users in another account, you must use a bucket policy.
+
+
 
 
 ## Security
@@ -563,6 +686,11 @@ You can use AWS WAF with your Application Load Balancer to allow or block reques
 
 Geo match conditions are important for many customers. For example, legal and licensing requirements restrict some customers from delivering their applications outside certain countries. These customers can configure a whitelist that allows only viewers in those countries. Other customers need to prevent the downloading of their encrypted software by users in certain countries. These customers can configure a blacklist so that end-users from those countries are blocked from downloading their software.
 
+## Amazon MQ
+Amazon MQ is a managed message broker service for Apache ActiveMQ and RabbitMQ that makes it easy to set up and operate message brokers on AWS. Amazon MQ reduces your operational responsibilities by managing the provisioning, setup, and maintenance of message brokers for you. Because Amazon MQ connects to your current applications with industry-standard APIs and protocols, you can easily migrate to AWS without having to rewrite code.
+it supports mqtt.
+
+
 ## SQS
 Amazon Simple Queue Service (SQS) is a fully managed message queuing service that enables you to decouple and scale microservices, distributed systems, and serverless applications. SQS offers two types of message queues - Standard queues vs FIFO queues.
 
@@ -577,7 +705,11 @@ Long polling makes it inexpensive to retrieve messages from your Amazon SQS queu
 
 ![image](https://user-images.githubusercontent.com/85909185/132929652-67398128-b8b5-4054-b053-4dd006973652.png)
 
+### Delay queue
+Delay queues let you postpone the delivery of new messages to a queue for several seconds, for example, when your consumer application needs additional time to process messages. If you create a delay queue, any messages that you send to the queue remain invisible to consumers for the duration of the delay period. The default (minimum) delay for a queue is 0 seconds. The maximum is 15 minutes.
+![image](https://user-images.githubusercontent.com/85909185/132938412-f40a8e6a-9a00-4253-9852-5f5d20b1e948.png)
 
+Delay queues are similar to visibility timeouts because both features make messages unavailable to consumers for a specific period of time. The difference between the two is that, for delay queues, a message is hidden when it is first added to queue, whereas for visibility timeouts a message is hidden only after it is consumed from the queue. The following diagram illustrates the relationship between delay queues and visibility timeouts.
 
 ### SNS
 With SQS, you can use FIFO (First-In-First-Out) queues to preserve the order in which messages are sent and received, and to avoid that a message is processed more than once.
@@ -605,6 +737,13 @@ The maximum storage threshold is the limit that you set for autoscaling the DB i
 When you provision an RDS Multi-AZ DB Instance, Amazon RDS automatically creates a primary DB Instance and synchronously replicates the data to a standby instance in a different Availability Zone (AZ). Each AZ runs on its own physically distinct, independent infrastructure, and is engineered to be highly reliable.
 the standby is not a read replica as it does not accept read request. 
 ![image](https://user-images.githubusercontent.com/85909185/132929205-6b281d8b-e91b-469c-a74d-fe1467769b79.png)
+
+### Aurora global database
+An Aurora global database provides more comprehensive failover capabilities than the failover provided by a default Aurora DB cluster. By using an Aurora global database, you can plan for and recover from disaster fairly quickly. Recovery from disaster is typically measured using values for RTO and RPO.
+
+global database uses storage replication while read replica uses db replica.
+
+![image](https://user-images.githubusercontent.com/85909185/132970969-83ad6e11-3a95-44b5-9dda-0210b62e2563.png)
 
 
 
@@ -667,6 +806,9 @@ Multi-AZ for Aurora:
 You use the reader endpoint for read-only connections for your Aurora cluster. This endpoint uses a load-balancing mechanism to help your cluster handle a query-intensive workload. The reader endpoint is the endpoint that you supply to applications that do reporting or other read-only operations on the cluster. The reader endpoint load-balances connections to available Aurora Replicas in an Aurora DB cluster.
 ![image](https://user-images.githubusercontent.com/85909185/132112485-3ccaafb1-9f2c-43ef-833a-bacacde2e841.png)
 
+### Amazon Aurora Serverless
+Amazon Aurora Serverless is an on-demand, auto-scaling configuration for Amazon Aurora (MySQL-compatible and PostgreSQL-compatible editions), where the database will automatically start-up, shut down, and scale capacity up or down based on your application's needs. It enables you to run your database in the cloud without managing any database instances. It's a simple, cost-effective option for infrequent, intermittent, or unpredictable workloads. You pay on a per-second basis for the database capacity you use when the database is active and migrate between standard and serverless configurations with a few clicks in the Amazon RDS Management Console.
+
 
 ## Secrets Manager
 AWS Secrets Manager helps you protect secrets needed to access your applications, services, and IT resources. The service enables you to easily rotate, manage, and retrieve database credentials, API keys, and other secrets throughout their lifecycle. Users and applications retrieve secrets with a call to Secrets Manager APIs, eliminating the need to hardcode sensitive information in plain text. Secrets Manager offers secret rotation with built-in integration for Amazon RDS, Amazon Redshift, and Amazon DocumentDB. The correct answer here is Secrets Manager
@@ -678,6 +820,37 @@ SSM Parameter Store can serve as a secrets store, but you must rotate the secret
 
 ## Resource Access Manager
 AWS Resource Access Manager (RAM) is a service that enables you to easily and securely share AWS resources with any AWS account or within your AWS Organization. You can share AWS Transit Gateways, Subnets, AWS License Manager configurations, and Amazon Route 53 Resolver rules resources with RAM. RAM eliminates the need to create duplicate resources in multiple accounts, reducing the operational overhead of managing those resources in every single account you own. You can create resources centrally in a multi-account environment, and use RAM to share those resources across accounts in three simple steps: create a Resource Share, specify resources, and specify accounts. RAM is available to you at no additional charge.
+
+## Database MIgration Service DMS
+Use AWS Database Migration Service to replicate the data from the databases into Amazon Redshift
+
+AWS Database Migration Service helps you migrate databases to AWS quickly and securely. The source database remains fully operational during the migration, minimizing downtime to applications that rely on the database. With AWS Database Migration Service, you can continuously replicate your data with high availability and consolidate databases into a petabyte-scale data warehouse by streaming data to Amazon Redshift and Amazon S3.
+
+
+https://d2908q01vomqb2.cloudfront.net/b6692ea5df920cad691c20319a6fffd7a4a766b8/2020/09/08/streaming-s3-to-kinesis-21.jpg
+
+## Acive Directory
+### AWS Managed Microsoft AD
+
+AWS Directory Service provides multiple ways to use Amazon Cloud Directory and Microsoft Active Directory (AD) with other AWS services.
+
+AWS Directory Service for Microsoft Active Directory (aka AWS Managed Microsoft AD) is powered by an actual Microsoft Windows Server Active Directory (AD), managed by AWS. With AWS Managed Microsoft AD, you can run directory-aware workloads in the AWS Cloud such as SQL Server-based applications. You can also configure a trust relationship between AWS Managed Microsoft AD in the AWS Cloud and your existing on-premises Microsoft Active Directory, providing users and groups with access to resources in either domain, using single sign-on (SSO).
+
+### AD Connector - Use AD Connector if you only need to allow your on-premises users to log in to AWS applications and services with their Active Directory credentials. AD Connector simply connects your existing on-premises Active Directory to AWS. You cannot use it to run directory-aware workloads on AWS, hence this option is not correct.
+
+### Simple AD - Simple AD provides a subset of the features offered by AWS Managed Microsoft AD. Simple AD is a standalone managed directory that is powered by a Samba 4 Active Directory Compatible Server. Simple AD does not support features such as trust relationships with other domains. Therefore, this option is not correct.
+
+### Amazon Cloud Directory - Amazon Cloud Directory is a cloud-native directory that can store hundreds of millions of application-specific objects with multiple relationships and schemas. Use Amazon Cloud Directory if you need a highly scalable directory store for your application’s hierarchical data. You cannot use it to establish trust relationships with other domains on the on-premises infrastructure. Therefore, this option is not correct.
+
+## AWS Config
+AWS Config is a service that enables you to assess, audit, and evaluate the configurations of your AWS resources. With Config, you can review changes in configurations and relationships between AWS resources, dive into detailed resource configuration histories, and determine your overall compliance against the configurations specified in your internal guidelines. You can use Config to answer questions such as - “What did my AWS resource look like at xyz point in time?”.
+![image](https://user-images.githubusercontent.com/85909185/132971119-a7db35af-52be-4366-9a6f-a73f4136b077.png)
+
+*Think resource performance monitoring, events, and alerts; think CloudWatch.
+*Think account-specific activity and audit; think CloudTrail.
+*Think resource-specific history, audit, and compliance; think Config.
+
+
 
 
 
