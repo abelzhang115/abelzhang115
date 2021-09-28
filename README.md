@@ -929,6 +929,15 @@ AWS Storage Gateway is a hybrid cloud storage service that gives you on-premises
 The combination of DataSync and File Gateway is the correct solution. AWS DataSync enables you to automate and accelerate online data transfers to AWS storage services. File Gateway then provides your on-premises applications with low latency access to the migrated data.
 
 
+##S3
+Amazon S3 supports the following destinations where it can publish events:
+
+* Amazon Simple Notification Service (Amazon SNS) topic
+* Amazon Simple Queue Service (Amazon SQS) queue
+* AWS Lambda
+Currently, the Standard SQS queue is only allowed as an Amazon S3 event notification destination, whereas the FIFO SQS queue is not allowed
+
+
 
 
 
