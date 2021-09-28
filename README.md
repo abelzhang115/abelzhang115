@@ -61,6 +61,13 @@ then we can launch EC2 instance with the IAM role
 
 then in application, the harcoded credential can be removed and then AWS S3 SDK can automatically query meta-data to get temporary credential before call.
 
+## root account
+below tasks can be performed by root account only
+* change account name or root password or root email address
+* change AWS support plan, close AWS account
+* enable MFA on S3 bucket delete
+* create Cloudfront key pair, register for GovCloud.
+
 ### EC2  Pricing
 ID|Type|Scenarios
 ------ | ------- | ----------
@@ -89,6 +96,8 @@ ELB can work with auto scaling to route traffic dynamically to available instanc
 * Class Load balancer
 * Network Load balancer (TCP)
 * Application Load Balancer (HTTP)
+
+By default, cross-zone load balancing is enabled for Application Load Balancer and disabled for Network Load Balancer
 
 ### Security Groups
 security groups are the fundational of network security in AWS as they control how traffic is allowd into or out of EC2 instances.
@@ -132,6 +141,12 @@ Overall, try to avoid using Elastic IP:
 • Or, as we’ll see later, use a Load Balancer and don’t use a public IP
 
 by default, EC2 instance comes with a private ip and public ip. and if machine restarted, public IP can change.
+
+### Retrieve instance metadata
+To view all categories of instance metadata from within a running instance, use the following IPv4 or IPv6 URIs:
+
+http://169.254.169.254/latest/meta-data/
+http://[fd00:ec2::254]/latest/meta-data/
 
 ### Placement group
 Sometimes you want control over the EC2 Instance placement strategy.
@@ -205,6 +220,15 @@ Per the default termination policy, the first priority is given to any allocatio
 
 On-demand /spot instances > oldest launch template /oldest launch configuration > next billing hour
 ![image](https://user-images.githubusercontent.com/85909185/132090470-4b60ee8c-3a61-40c8-ade2-3798be934b58.png)
+
+#### instance scale-in protection
+To control whether an Auto Scaling group can terminate a particular instance when scaling in, use instance scale-in protection. You can enable the instance scale-in protection setting on an Auto Scaling group or on an individual Auto Scaling instance. When the Auto Scaling group launches an instance, it inherits the instance scale-in protection setting of the Auto Scaling group. You can change the instance scale-in protection setting for an Auto Scaling group or an Auto Scaling instance at any time.
+If all instances in an Auto Scaling group are protected from termination during scale in, and a scale-in event occurs, its desired capacity is decremented. However, the Auto Scaling group can't terminate the required number of instances until their instance scale-in protection settings are disabled.
+Instance scale-in protection does not protect Auto Scaling instances from the following:
+* Manual termination through the Amazon EC2 console, the terminate-instances command, or the TerminateInstances action. To protect Auto Scaling instances from manual termination, enable Amazon EC2 termination protection.
+* Health check replacement if the instance fails health checks. For more information, see Health checks for Auto Scaling instances. To prevent Amazon EC2 Auto Scaling from terminating unhealthy instances, suspend the ReplaceUnhealthy process. 
+* Spot Instance interruptions. A Spot Instance is terminated when capacity is no longer available or the Spot price exceeds your maximum price.
+
 
 
 ### Application Load Balancer ALB
@@ -542,6 +566,13 @@ You can't transition from the following:
 #### bucket policy
 A bucket policy is a type of resource-based policy that can be used to grant permissions to the principal that is specified in the policy. Principals can be in the same account as the resource or in other accounts. For cross-account permissions to other AWS accounts or users in another account, you must use a bucket policy.
 
+#### S3 website endpoints
+When you configure your bucket as a static website, the website is available at the AWS Region-specific website endpoint of the bucket.
+Depending on your Region, your Amazon S3 website endpoints follow one of these two formats.
+*s3-website dash (-) Region ‐ http://bucket-name.s3-website.Region.amazonaws.com
+*s3-website dot (.) Region ‐ http://bucket-name.s3-website-Region.amazonaws.com
+These URLs return the default index document that you configure for the website.
+
 
 
 
@@ -657,10 +688,16 @@ Individual message delay. For example, you have a job queue and need to schedule
 Dynamically increasing concurrency/throughput at read time. For example, you have a work queue and want to add more readers until the backlog is cleared. With Amazon Kinesis Data Streams, you can scale up to a sufficient number of shards (note, however, that you'll need to provision enough shards ahead of time).
 Leveraging Amazon SQS’s ability to scale transparently. For example, you buffer requests and the load changes as a result of occasional load spikes or the natural growth of your business. Because each buffered request can be processed independently, Amazon SQS can scale transparently to handle the load without any provisioning instructions from you
 
+### Enhanced Fanout feature of Kinesis Data Streams
+By default, the 2MB/second/shard output is shared between all of the applications consuming data from the stream. You should use enhanced fan-out if you have multiple consumers retrieving data from a stream in parallel. With enhanced fan-out developers can register stream consumers to use enhanced fan-out and receive their own 2MB/second pipe of read throughput per shard, and this throughput automatically scales with the number of shards in a stream.
+![image](https://user-images.githubusercontent.com/85909185/135000155-b8952989-b4e0-4d8e-b0f7-d1f50886673b.png)
+
+
 ## Kinesis Data Firehose
 Amazon Kinesis Data Firehose is the easiest way to load streaming data into data stores and analytics tools. It can capture, transform, and load streaming data into Amazon S3, Amazon Redshift, Amazon Elasticsearch Service, and Splunk, enabling near real-time analytics with existing business intelligence tools and dashboards you’re already using today. It is a fully managed service that automatically scales to match the throughput of your data and requires no ongoing administration. It can also batch, compress, and encrypt the data before loading it, minimizing the amount of storage used at the destination and increasing security.
 ![image](https://user-images.githubusercontent.com/85909185/131784743-660c62f7-83c9-4daa-bd24-a663d6624995.png)
 
+Kinesis Data Firehose can only write to S3, Redshift, Elasticsearch or Splunk. You can't have applications consuming data streams from Kinesis Data Firehose, that's the job of Kinesis Data Streams. 
 
 ## GuardDuty 
 Amazon GuardDuty is a threat detection service that continuously monitors for malicious activity and unauthorized behavior to protect your AWS accounts, workloads, and data stored in Amazon S3. With the cloud, the collection and aggregation of account and network activities is simplified, but it can be time-consuming for security teams to continuously analyze event log data for potential threats. With GuardDuty, you now have an intelligent and cost-effective option for continuous threat detection in AWS. The service uses machine learning, anomaly detection, and integrated threat intelligence to identify and prioritize potential threats.
@@ -752,6 +789,17 @@ DynamoDB - Amazon DynamoDB is a key-value and document database that delivers si
 
 ## RedShift
 Redshift - Amazon Redshift is a fully-managed petabyte-scale cloud-based data warehouse product designed for large scale data set storage and analysis. 
+
+## Redshift Spectrum
+Amazon Redshift is a fully-managed petabyte-scale cloud-based data warehouse product designed for large scale data set storage and analysis.
+
+Using Amazon Redshift Spectrum, you can efficiently query and retrieve structured and semistructured data from files in Amazon S3 without having to load the data into Amazon Redshift tables.
+
+Amazon Redshift Spectrum resides on dedicated Amazon Redshift servers that are independent of your cluster. Redshift Spectrum pushes many compute-intensive tasks, such as predicate filtering and aggregation, down to the Redshift Spectrum layer. Thus, Redshift Spectrum queries use much less of your cluster's processing capacity than other queries.
+
+Redshift Spectrum Overview
+![image](https://user-images.githubusercontent.com/85909185/134999317-59b15aec-ce22-49db-b8db-7e1f3b1472ae.png)
+
 
 ## ElasticCache
 ElastiCache - Amazon ElastiCache allows you to seamlessly set up, run, and scale popular open-Source compatible in-memory data stores in the cloud. Build data-intensive apps or boost the performance of your existing databases by retrieving data from high throughput and low latency in-memory data stores. Amazon ElastiCache is a popular choice for real-time use cases like Caching, Session Stores, Gaming, Geospatial Services, Real-Time Analytics, and Queuing. Elasticache is used as a caching layer in front of relational databases. It is not a good fit to store data in key-value pairs from the IoT sources
@@ -849,6 +897,42 @@ AWS Config is a service that enables you to assess, audit, and evaluate the conf
 *Think resource performance monitoring, events, and alerts; think CloudWatch.
 *Think account-specific activity and audit; think CloudTrail.
 *Think resource-specific history, audit, and compliance; think Config.
+
+
+## Trusted Advisor
+AWS Trusted Advisor is an online tool that draws upon best practices learned from AWS’s aggregated operational history of serving hundreds of thousands of AWS customers. Trusted Advisor inspects your AWS environment and makes recommendations for saving money, improving system performance, or closing security gaps. It scans your AWS infrastructure and compares it to AWS Best practices in five categories (Cost Optimization, Performance, Security, Fault Tolerance, Service limits) and then provides recommendations.
+
+How Trusted Advisor Works:
+![image](https://user-images.githubusercontent.com/85909185/134999592-d934ac11-357a-4025-8c7c-3de018218b3c.png)
+
+
+## API Gateway
+Amazon API Gateway is a fully managed service that makes it easy for developers to create, publish, maintain, monitor, and secure APIs at any scale. APIs act as the "front door" for applications to access data, business logic, or functionality from your backend services.
+
+How API Gateway Works:
+![image](https://user-images.githubusercontent.com/85909185/135000341-11a04389-2ea5-4673-991c-547b7eebf306.png)
+
+## DataSync 
+AWS DataSync is an online data transfer service that simplifies, automates, and accelerates copying large amounts of data to and from AWS storage services over the internet or AWS Direct Connect.
+
+AWS DataSync fully automates and accelerates moving large active datasets to AWS, up to 10 times faster than command-line tools. It is natively integrated with Amazon S3, Amazon EFS, Amazon FSx for Windows File Server, Amazon CloudWatch, and AWS CloudTrail, which provides seamless and secure access to your storage services, as well as detailed monitoring of the transfer. DataSync uses a purpose-built network protocol and scale-out architecture to transfer data. A single DataSync agent is capable of saturating a 10 Gbps network link.
+
+DataSync fully automates the data transfer. It comes with retry and network resiliency mechanisms, network optimizations, built-in task scheduling, monitoring via the DataSync API and Console, and CloudWatch metrics, events, and logs that provide granular visibility into the transfer process. DataSync performs data integrity verification both during the transfer and at the end of the transfer.
+
+How DataSync Works:
+![image](https://user-images.githubusercontent.com/85909185/135007686-29868e6e-d637-43fc-be60-55006f9c4cbb.png)
+
+
+## AWS Storage Gateway
+AWS Storage Gateway is a hybrid cloud storage service that gives you on-premises access to virtually unlimited cloud storage. The service provides three different types of gateways – Tape Gateway, File Gateway, and Volume Gateway – that seamlessly connect on-premises applications to cloud storage, caching data locally for low-latency access. File gateway offers SMB or NFS-based access to data in Amazon S3 with local caching.
+
+The combination of DataSync and File Gateway is the correct solution. AWS DataSync enables you to automate and accelerate online data transfers to AWS storage services. File Gateway then provides your on-premises applications with low latency access to the migrated data.
+
+
+
+
+
+
 
 
 
