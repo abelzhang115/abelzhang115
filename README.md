@@ -154,6 +154,20 @@ Sometimes you want control over the EC2 Instance placement strategy.
 * Spread—spreads instances across underlying hardware (max 7 instances per group per AZ)  --instances on different hardware, can across AZ and region, maximize high availability. 
 * Partition—spreads instances across many different partitions (which rely on different sets of racks) within an AZ. Scales to 100s of EC2 instances per group (Hadoop, Cassandra, Kafka)  -up to 7 partitions per AZ, can span across AZ in the same region. up to 100 instances.instances in the same partition does not share racks. HDFS, HBase, Cassandra,Kafka
 
+Partition placement groups - Partition placement groups help reduce the likelihood of correlated hardware failures for your application. When using partition placement groups, Amazon EC2 divides each group into logical segments called partitions. Amazon EC2 ensures that each partition within a placement group has its own set of racks. Each rack has its own network and power source. No two partitions within a placement group share the same racks, allowing you to isolate the impact of a hardware failure within your application.
+
+The following image is a simple visual representation of a partition placement group in a single Availability Zone. It shows instances that are placed into a partition placement group with three partitions—Partition 1, Partition 2, and Partition 3. Each partition comprises multiple instances. The instances in a partition do not share racks with the instances in the other partitions, allowing you to contain the impact of a single hardware failure to only the associated partition.
+
+Partition placement groups can be used to deploy large distributed and replicated workloads, such as HDFS, HBase, and Cassandra, across distinct racks. When you launch instances into a partition placement group, Amazon EC2 tries to distribute the instances evenly across the number of partitions that you specify. You can also launch instances into a specific partition to have more control over where the instances are placed.
+
+A partition placement group can have partitions in multiple Availability Zones in the same Region. A partition placement group can have a maximum of seven partitions per Availability Zone. The number of instances that can be launched into a partition placement group is limited only by the limits of your account.
+
+Partition placement groups:  via - https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/placement-groups.html#placement-groups-partition
+
+Spread placement groups - A spread placement group is a group of instances that are each placed on distinct racks, with each rack having its own network and power source. Spread placement groups are recommended for applications that have a small number of critical instances that should be kept separate from each other. Launching instances in a spread placement group reduces the risk of simultaneous failures that might occur when instances share the same racks. Spread placement groups provide access to distinct racks, and are therefore suitable for mixing instance types or launching instances over time. As the use-case talks about running large distributed and replicated workloads, so it needs more instances, therefore this option is not the right fit for the given use-case.
+
+A spread placement group can span multiple Availability Zones in the same Region. You can have a maximum of seven running instances per Availability Zone per group.
+
 ### Elastic Network Interface (ENI)
 Logical component in a VPC that represents a virtual network card
 The ENI can have the following attributes:
@@ -240,6 +254,23 @@ You can't specify publicly routable IP addresses as values for IP target type, s
 ### NAT gateway vs NAT instance
 ![image](https://user-images.githubusercontent.com/85909185/132929543-092ccf08-16ec-4953-8b05-8de255a668f9.png)
 
+### Rebalancing activities
+Rebalancing activities fall into two categories: Availability Zone rebalancing and capacity rebalancing.
+#### Availability Zone rebalancing
+After certain actions occur, your Auto Scaling group can become unbalanced between Availability Zones. Amazon EC2 Auto Scaling compensates by rebalancing the Availability Zones. The following actions can lead to rebalancing activity:
+You change the Availability Zones for your group.
+You explicitly terminate or detach instances and the group becomes unbalanced.
+An Availability Zone that previously had insufficient capacity recovers and has additional capacity available.
+An Availability Zone that previously had a Spot price above your maximum price now has a Spot price below your maximum price.
+When rebalancing, Amazon EC2 Auto Scaling launches new instances before terminating the old ones, so that rebalancing does not compromise the performance or availability of your application.
+Because Amazon EC2 Auto Scaling attempts to launch new instances before terminating the old ones, being at or near the specified maximum capacity could impede or completely halt rebalancing activities. To avoid this problem, the system can temporarily exceed the specified maximum capacity of a group by a 10 percent margin (or by a 1-instance margin, whichever is greater) during a rebalancing activity. The margin is extended only if the group is at or near maximum capacity and needs rebalancing, either because of user-requested rezoning or to compensate for zone availability issues. The extension lasts only as long as needed to rebalance the group (typically a few minutes).
+
+#### Capacity Rebalancing
+You can enable Capacity Rebalancing for your Auto Scaling groups when using Spot Instances. When you turn on Capacity Rebalancing, Amazon EC2 Auto Scaling attempts to launch a Spot Instance whenever Amazon EC2 notifies that a Spot Instance is at an elevated risk of interruption. After launching a new instance, it then terminates an old instance. 
+
+Auto Scaling creates a new scaling activity for terminating the unhealthy instance and then terminates it. Later, another scaling activity launches a new instance to replace the terminated instance.
+
+
 
 ## Network
 ### Global Accelerator
@@ -268,6 +299,35 @@ dynamic content determined at request time and proxy methods send to origin dire
 Field-level encryption allows you to enable your users to securely upload sensitive information to your web servers. The sensitive information provided by your users is encrypted at the edge, close to the user, and remains encrypted throughout your entire application stack. This encryption ensures that only applications that need the data—and have the credentials to decrypt it—are able to do so.
 
 To use field-level encryption, when you configure your CloudFront distribution, specify the set of fields in POST requests that you want to be encrypted, and the public key to use to encrypt them. You can encrypt up to 10 data fields in a request. (You can’t encrypt all of the data in a request with field-level encryption; you must specify individual fields to encrypt.)
+
+#### Configuring secure access and restricting access to content
+* Configure HTTPS connections
+* Prevent users in specific geographic locations from accessing content
+* Require users to access content using CloudFront signed URLs or signed cookies
+* Set up field-level encryption for specific content fields
+* Use AWS WAF to control access to your content
+
+Require that your users access your private content by using special CloudFront signed URLs or signed cookies.
+
+Require that your users access your content by using CloudFront URLs, not URLs that access content directly on the origin server (for example, Amazon S3 or a private HTTP server). Requiring CloudFront URLs isn't necessary, but we recommend it to prevent users from bypassing the restrictions that you specify in signed URLs or signed cookies.
+
+Restricting access to files in Amazon S3 buckets
+You can optionally secure the content in your Amazon S3 bucket so that users can access it through CloudFront but cannot access it directly by using Amazon S3 URLs. This prevents someone from bypassing CloudFront and using the Amazon S3 URL to get content that you want to restrict access to. This step isn't required to use signed URLs, but we recommend it.
+
+To require that users access your content through CloudFront URLs, you do the following tasks:
+
+Create a special CloudFront user called an origin access identity and associate it with your CloudFront distribution.
+
+Give the origin access identity permission to read the files in your bucket.
+
+Remove permission for anyone else to use Amazon S3 URLs to read the files.
+
+To restrict access to content that you serve from Amazon S3 buckets, follow these steps:
+
+Create a special CloudFront user called an origin access identity (OAI) and associate it with your distribution.
+
+Configure your S3 bucket permissions so that CloudFront can use the OAI to access the files in your bucket and serve them to your users. Make sure that users can’t use a direct URL to the S3 bucket to access a file there.
+
 
 
 ###Route 53
@@ -940,12 +1000,77 @@ Currently, the Standard SQS queue is only allowed as an Amazon S3 event notifica
 
 
 
+## SCP
+Service control policies (SCPs) are a type of organization policy that you can use to manage permissions in your organization. SCPs offer central control over the maximum available permissions for all accounts in your organization. SCPs help you to ensure your accounts stay within your organization’s access control guidelines.
+
+An SCP restricts permissions for IAM users and roles in member accounts, including the member account's root user. Any account has only those permissions permitted by every parent above it. If a permission is blocked at any level above the account, either implicitly (by not being included in an Allow policy statement) or explicitly (by being included in a Deny policy statement), a user or role in the affected account can't use that permission, even if the account administrator attaches the AdministratorAccess IAM policy with / permissions to the user.
+
+SCPs don't affect users or roles in the management account. They affect only the member accounts in your organization.
+
+Running a DB instance as a Multi-AZ deployment can further reduce the impact of a maintenance event because Amazon RDS applies operating system updates by following these steps:
+
+Perform maintenance on the standby.
+
+Promote the standby to primary.
+
+Perform maintenance on the old primary, which becomes the new standby.
+
+A Multi-AZ standby cannot serve read requests. Multi-AZ deployments are designed to provide enhanced database availability and durability, rather than read scaling benefits. As such, the feature uses synchronous replication between primary and standby. AWS implementation makes sure the primary and the standby are constantly in sync, but precludes using the standby for read or write operations.
+
+## AWS PrivateLink
+AWS PrivateLink provides private connectivity between VPCs, AWS services, and your on-premises networks, without exposing your traffic to the public internet. AWS PrivateLink makes it easy to connect services across different accounts and VPCs to significantly simplify your network architecture.
+You can connect services across different accounts and Amazon VPCs, with no need for firewall rules, path definitions, or route tables. There is no need to configure an Internet gateway, VPC peering connection, or manage VPC Classless Inter-Domain Routing (CIDRs). Because AWS PrivateLink simplifies your network architecture, it is easier for you to manage your global network.
+AWS PrivateLink enables you to securely connect your VPCs to supported AWS services: to your own services on AWS, to services hosted by other AWS accounts, and to third-party services on AWS Marketplace. Since traffic between your VPC and any one of these services does not leave the Amazon network, an Internet gateway, NAT device, public IP address, or VPN connection is no longer needed to communicate with the service.
+To use AWS PrivateLink, create an interface VPC endpoint for a service in your VPC. This creates an Elastic Network Interface (ENI) in your subnet with a private IP address that serves as an entry point for traffic destined to the service. Service endpoints available over AWS PrivateLink will appear as ENIs with private IPs in your VPCs.
+![image](https://user-images.githubusercontent.com/85909185/136873746-0775280e-8924-4ced-806c-030f4b21a683.png)
+Let's understand this by a real-life use case
+
+Suppose You have your Own VPC (created by you using your own AWS Account) in which you have few EC2 instances that wants to communicate with instances running in your Client's VPC - obviously this VPC is created by your client using his/her AWS Account - Use VPC Peering to achieve this communication requirement
+
+Now consider you have your OWN VPC (created by you using your own AWS Account) with EC2 Instance running inside it, and using the same AWS account you uploaded some files in S3. And your EC2 Instance now wants to read content of the file in S3.
+
+In this case you will configure VPC Endpoint - which uses PrivateLink technology - AWS PrivateLink allows you to privately access services hosted on the AWS network in a highly available and scalable manner, without using public IPs and without requiring the traffic to traverse the internet.
 
 
+## Spot block
+A Spot Instance is an unused EC2 instance that is available for less than the On-Demand price. Because Spot Instances enable you to request unused EC2 instances at steep discounts, you can lower your Amazon EC2 costs significantly. The hourly price for a Spot Instance is called a Spot price.
+
+Spot Instances with a defined duration (also known as Spot blocks) are designed not to be interrupted and will run continuously for the duration you select. This makes them ideal for jobs that take a finite time to complete, such as batch processing, encoding and rendering, modeling and analysis, and continuous integration.
+
+## Instance store lifetime
+You can specify instance store volumes for an instance only when you launch it. You can't detach an instance store volume from one instance and attach it to a different instance.
+
+The data in an instance store persists only during the lifetime of its associated instance. If an instance reboots (intentionally or unintentionally), data in the instance store persists. However, data in the instance store is lost under any of the following circumstances:
+
+The underlying disk drive fails
+
+The instance stops
+
+The instance hibernates
+
+The instance terminates
+
+Therefore, do not rely on instance store for valuable, long-term data. Instead, use more durable data storage, such as Amazon S3, Amazon EBS, or Amazon EFS.
+
+When you stop, hibernate, or terminate an instance, every block of storage in the instance store is reset. Therefore, your data cannot be accessed through the instance store of another instance.
+
+If you create an AMI from an instance, the data on its instance store volumes isn't preserved and isn't present on the instance store volumes of the instances that you launch from the AMI.
+
+## AWS Firewall manager
+AWS Firewall Manager is a security management service which allows you to centrally configure and manage firewall rules across your accounts and applications in AWS Organizations. As new applications are created, Firewall Manager makes it easy to bring new applications and resources into compliance by enforcing a common set of security rules. Now you have a single service to build firewall rules, create security policies, and enforce them in a consistent, hierarchical manner across your entire infrastructure.
+
+Using AWS Firewall Manager, you can centrally configure AWS WAF rules, AWS Shield Advanced protection, Amazon Virtual Private Cloud (VPC) security groups, AWS Network Firewalls, and Amazon Route 53 Resolver DNS Firewall rules across accounts and resources in your organization. It does not support Network ACLs as of today.
+
+## Multi-AZ deployments, multi-region deployments, and read replicas
+
+![image](https://user-images.githubusercontent.com/85909185/137125477-6cc1eb17-69e4-46dc-8d5e-4e3d18e3ddf6.png)
+![image](https://user-images.githubusercontent.com/85909185/137125550-a268c7bb-0619-4a15-9aef-63fd75f4411a.png)
+![image](https://user-images.githubusercontent.com/85909185/137125587-928f72bc-f267-4c7b-8959-3f901a092e61.png)
 
 
-
-
+## Choosing between Redis and Memcached
+![image](https://user-images.githubusercontent.com/85909185/137126129-218e4a0c-94a6-49f5-8c87-351da481b361.png)
+![image](https://user-images.githubusercontent.com/85909185/137126150-c9b7ebae-f83d-47f0-a066-43caf1acc647.png)
 
 
 
